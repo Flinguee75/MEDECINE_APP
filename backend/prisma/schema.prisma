@@ -1,0 +1,311 @@
+// Schéma Prisma pour le MVP Système de Gestion Hospitalière
+// Base de données : PostgreSQL
+// Version : 2.0 (Extended Clinical Workflow)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ÉNUMÉRATIONS
+// ============================================
+
+enum Role {
+  ADMIN
+  DOCTOR
+  BIOLOGIST
+  NURSE
+  SECRETARY
+}
+
+enum AppointmentStatus {
+  SCHEDULED              // Planifié (initial state)
+  CHECKED_IN             // Enregistré (patient arrived)
+  IN_CONSULTATION        // En consultation (vitals entered)
+  WAITING_RESULTS        // En attente de résultats biologiques
+  CONSULTATION_COMPLETED // Consultation terminée
+  COMPLETED              // Terminé (final state after billing)
+  CANCELLED              // Annulé
+}
+
+enum PrescriptionStatus {
+  CREATED            // Créée par le médecin
+  SENT_TO_LAB        // Envoyée au laboratoire
+  SAMPLE_COLLECTED   // Échantillon collecté par infirmier
+  IN_PROGRESS        // En cours d'analyse
+  RESULTS_AVAILABLE  // Résultats disponibles (biologist validated)
+  COMPLETED          // Complété (doctor reviewed)
+}
+
+enum BillingStatus {
+  PENDING
+  PAID
+  PARTIALLY_PAID
+}
+
+enum AuditAction {
+  CREATED
+  UPDATED
+  DELETED
+  STATUS_CHANGED
+  NOTES_SAVED
+}
+
+enum EntityType {
+  APPOINTMENT
+  PATIENT
+  PRESCRIPTION
+  RESULT
+}
+
+// ============================================
+// MODÈLES
+// ============================================
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String   // Hashé avec bcrypt
+  role      Role     @default(DOCTOR)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  appointmentsAsDoctor Appointment[]  @relation("DoctorAppointments")
+  prescriptions        Prescription[] @relation("DoctorPrescriptions")
+  nursePrescriptions   Prescription[] @relation("NursePrescriptions")
+  auditLogs            AuditLog[]     @relation("UserAuditLogs")
+
+  @@map("users")
+}
+
+model Patient {
+  id                 String   @id @default(uuid())
+  firstName          String
+  lastName           String
+  birthDate          DateTime
+  sex                String   @default("NON_SPECIFIE")
+  phone              String   @default("")
+  address            String   @default("")
+  emergencyContact   String   @default("")
+  insurance          String   @default("")
+  idNumber           String?
+  consentMedicalData Boolean  @default(false)
+  consentContact     Boolean  @default(false)
+  medicalHistory     Json?    // Antécédents médicaux (allergies, maladies chroniques, etc.)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  appointments   Appointment[]
+  prescriptions  Prescription[]
+  documents      Document[]
+  vitalHistories VitalHistory[]
+
+  @@map("patients")
+}
+
+model Appointment {
+  id     String            @id @default(uuid())
+  date   DateTime
+  motif  String            // Raison du rendez-vous
+  status AppointmentStatus @default(SCHEDULED)
+
+  // Vitals (JSON structure for flexibility)
+  vitals Json? // Constantes vitales saisies par infirmier
+
+  // Medical history notes (declared by patient to nurse)
+  medicalHistoryNotes String? @db.Text
+
+  // Consultation notes (entered by doctor)
+  consultationNotes String? @db.Text
+
+  // Auto-save consultation notes (NOUVEAU)
+  consultationNotesDraft String?  @db.Text // Brouillon auto-save
+  lastAutoSaveAt         DateTime?         // Timestamp dernier auto-save
+
+  // Traçabilité modifications (NOUVEAU)
+  modifiedBy          String?   // Dernier userId qui a modifié
+  modifiedAt          DateTime? // Timestamp dernière modification
+  modificationCount   Int       @default(0) // Nombre de modifications
+
+  // Flag pour consultation en cours (NOUVEAU)
+  isDraftConsultation Boolean @default(false) // true = consultation non finalisée
+
+  // Workflow timestamps
+  checkedInAt     DateTime? // When patient was checked in
+  vitalsEnteredAt DateTime? // When vitals were entered
+  consultedAt     DateTime? // When consultation was completed
+  closedAt        DateTime? // When appointment was closed
+
+  // User tracking
+  vitalsEnteredBy String? // userId of nurse who entered vitals
+  consultedBy     String? // userId of doctor who consulted
+  closedBy        String? // userId of secretary who closed
+
+  // Billing information
+  billingAmount Decimal?       @db.Decimal(10, 2) // Billing amount
+  billingStatus BillingStatus? @default(PENDING)  // Payment status
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  doctorId String
+  doctor   User   @relation("DoctorAppointments", fields: [doctorId], references: [id], onDelete: Cascade)
+
+  prescriptions  Prescription[]
+  vitalHistories VitalHistory[]
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([date])
+  @@index([status])
+  @@map("appointments")
+}
+
+model Prescription {
+  id     String             @id @default(uuid())
+  text   String             @db.Text // Détails de la prescription
+  status PrescriptionStatus @default(CREATED)
+
+  // Lab workflow timestamps
+  sampleCollectedAt   DateTime? // When sample was collected
+  analysisStartedAt   DateTime? // When analysis started
+  analysisCompletedAt DateTime? // When analysis completed (optional tracking)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  doctorId String
+  doctor   User   @relation("DoctorPrescriptions", fields: [doctorId], references: [id], onDelete: Cascade)
+
+  // Nurse who collected sample
+  nurseId String?
+  nurse   User?   @relation("NursePrescriptions", fields: [nurseId], references: [id], onDelete: SetNull)
+
+  result Result? // Une prescription peut avoir un résultat (one-to-one)
+
+  @@index([patientId])
+  @@index([appointmentId])
+  @@index([doctorId])
+  @@index([status])
+  @@map("prescriptions")
+}
+
+model Result {
+  id   String  @id @default(uuid())
+  data Json?   // Constantes biologiques structurées (optional)
+  text String  @db.Text // Commentaires et conclusion du biologiste
+
+  // Validation by biologist
+  validatedBy String?   // userId of biologist
+  validatedAt DateTime? // When biologist validated
+
+  // Review by doctor
+  reviewedBy     String?   // userId of doctor
+  reviewedAt     DateTime? // When doctor reviewed
+  interpretation String?   @db.Text // Doctor's medical interpretation
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  prescriptionId String       @unique
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  @@map("results")
+}
+
+model Document {
+  id         String   @id @default(uuid())
+  name       String   // Nom du fichier
+  type       String   // Type de document (ordonnance, radio, etc.)
+  url        String   // Chemin du fichier ou URL
+  uploadedBy String?  // ID de l'utilisateur qui a uploadé
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  patientId String
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  entityType  String   // "APPOINTMENT", "PRESCRIPTION", etc.
+  entityId    String   // ID de l'entité modifiée
+  action      String   // "CREATED", "UPDATED", "DELETED", "STATUS_CHANGED"
+
+  // Données de traçabilité
+  performedBy String   // userId
+  performedAt DateTime @default(now())
+
+  // Détails des changements
+  changes     Json     // { field: { old: value, new: value } }
+  ipAddress   String?  // Optionnel pour MVP
+  userAgent   String?  // Optionnel pour MVP
+
+  // Métadonnées
+  reason      String?  @db.Text // Raison de la modification (optionnel)
+
+  createdAt   DateTime @default(now())
+
+  // Relations
+  performer User @relation("UserAuditLogs", fields: [performedBy], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId])
+  @@index([performedBy])
+  @@index([performedAt])
+  @@map("audit_logs")
+}
+
+model VitalHistory {
+  id                  String   @id @default(uuid())
+  appointmentId       String   // Lien vers Appointment
+  patientId           String   // Lien vers Patient
+
+  // Données vitales (JSON structure identique à Appointment.vitals)
+  vitals              Json
+  medicalHistoryNotes String?  @db.Text
+
+  // Traçabilité
+  enteredBy String   // userId (NURSE)
+  enteredAt DateTime @default(now())
+
+  // Type d'action
+  actionType String // "CREATED", "UPDATED", "AUTO_SAVED"
+
+  // Flag draft/finalized
+  isDraft     Boolean   @default(true)
+  finalizedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patient     Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId])
+  @@index([patientId])
+  @@index([enteredAt])
+  @@map("vital_history")
+}

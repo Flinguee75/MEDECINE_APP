@@ -1,0 +1,302 @@
+.appointments-calendar .rbc-time-view,
+.appointments-calendar .rbc-month-view {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+}
+
+/* ===== STYLES DES BLOCS D'ÉVÉNEMENTS ===== */
+
+/* Bloc principal de l'événement dans la vue temps */
+.appointments-calendar .rbc-time-view .rbc-day-slot .rbc-event {
+  border-radius: 10px;
+  left: 2px;
+  right: 2px;
+  width: calc(100% - 4px);
+  padding: 8px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 32px;
+}
+
+/* Effet au survol */
+.appointments-calendar .rbc-time-view .rbc-day-slot .rbc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+}
+
+/* Bloc d'événement dans la vue mois */
+.appointments-calendar .rbc-month-view .rbc-event {
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin: 2px 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.appointments-calendar .rbc-month-view .rbc-event:hover {
+  transform: translateX(2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Contenu de l'événement - Typographie améliorée */
+.appointments-calendar .rbc-event-content {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  color: #ffffff !important;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Masquer le label de l'heure dans les événements */
+.appointments-calendar .rbc-time-view .rbc-event-label {
+  display: none !important;
+}
+
+/* Séparateur entre l'heure et le contenu */
+.appointments-calendar .rbc-time-view .rbc-event-content {
+  margin-top: 2px;
+  font-size: 0.8rem;
+}
+
+/* Styles spécifiques selon le statut */
+.appointments-calendar .rbc-event[style*="background-color: #1a73e8"] {
+  background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%) !important;
+  border-left: 3px solid #0d47a1;
+}
+
+.appointments-calendar .rbc-event[style*="background-color: #2e7d32"] {
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%) !important;
+  border-left: 3px solid #0d4f1c;
+}
+
+.appointments-calendar .rbc-event[style*="background-color: #c62828"] {
+  background: linear-gradient(135deg, #c62828 0%, #b71c1c 100%) !important;
+  border-left: 3px solid #8e0000;
+}
+
+/* Indicateur de statut (petit point) - Masqué */
+.appointments-calendar .rbc-event::before {
+  display: none;
+}
+
+/* ===== STYLES DU CALENDRIER ===== */
+
+.appointments-calendar .rbc-time-content > * + * > * {
+  border-left: 1px solid #eee;
+}
+
+.appointments-calendar .rbc-timeslot-group {
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.appointments-calendar .rbc-time-view .rbc-time-header-cell {
+  padding: 8px 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #424242;
+}
+
+.appointments-calendar .rbc-time-view .rbc-time-slot {
+  min-height: 24px;
+  border-top: 1px solid #f5f5f5;
+}
+
+/* Corriger la ligne blanche vide en haut du calendrier */
+.appointments-calendar .rbc-time-header {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.appointments-calendar .rbc-time-content {
+  border-top: none;
+}
+
+/* Masquer ou réduire les lignes de temps vides */
+.appointments-calendar .rbc-time-view .rbc-day-slot {
+  min-height: 0;
+}
+
+.appointments-calendar .rbc-time-view .rbc-day-slot:empty {
+  display: none;
+}
+
+/* Corriger l'espacement de la première ligne de temps */
+.appointments-calendar .rbc-time-view .rbc-time-gutter {
+  border-right: 1px solid #e0e0e0;
+}
+
+.appointments-calendar .rbc-time-view .rbc-time-header-content {
+  border-left: 1px solid #e0e0e0;
+}
+
+/* Supprimer l'espace vide en haut de la grille de temps */
+.appointments-calendar .rbc-time-view .rbc-time-content > *:first-child {
+  border-top: none;
+}
+
+.appointments-calendar .rbc-time-view .rbc-time-content > *:first-child .rbc-day-slot:first-child {
+  border-top: none;
+}
+
+/* Masquer la section "all-day" si elle est vide */
+.appointments-calendar .rbc-allday-cell {
+  display: none;
+}
+
+.appointments-calendar .rbc-time-header .rbc-allday-cell {
+  display: none;
+}
+
+.appointments-calendar .rbc-time-header-content .rbc-allday-cell {
+  display: none;
+}
+
+/* Masquer la ligne de fond "all-day" vide */
+.appointments-calendar .rbc-row-bg .rbc-day-bg:empty {
+  display: none;
+}
+
+/* Réduire la hauteur de la section all-day si elle existe */
+.appointments-calendar .rbc-allday-cell,
+.appointments-calendar .rbc-time-header .rbc-allday-cell {
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  overflow: hidden;
+}
+
+.appointments-calendar .rbc-row-bg {
+  display: none;
+}
+
+/* Amélioration de la vue agenda */
+.appointments-calendar .rbc-agenda-view table {
+  border-radius: 8px;
+  overflow: hidden;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* En-têtes du tableau agenda */
+.appointments-calendar .rbc-agenda-view thead th {
+  background: #f5f5f5;
+  color: #424242;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 12px;
+  border-bottom: 2px solid #e0e0e0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.appointments-calendar .rbc-agenda-view .rbc-agenda-event-cell {
+  padding: 12px;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  color: #1a1a1a !important;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.appointments-calendar .rbc-agenda-view .rbc-agenda-date-cell {
+  padding: 12px;
+  font-weight: 600;
+  background: #f8f9fa;
+  color: #1976d2 !important;
+  font-size: 0.875rem;
+  border-right: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  vertical-align: top;
+}
+
+.appointments-calendar .rbc-agenda-view .rbc-agenda-time-cell {
+  padding: 12px;
+  color: #1976d2 !important;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fff;
+}
+
+/* Texte dans les événements de l'agenda */
+.appointments-calendar .rbc-agenda-view .rbc-agenda-event-cell * {
+  color: #1a1a1a !important;
+}
+
+/* Amélioration de la vue jour */
+.appointments-calendar .rbc-day-view .rbc-event {
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* Toolbar style: arrows + "Aujourd'hui" capsule */
+.appointments-calendar .rbc-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px 12px;
+}
+
+.appointments-calendar .rbc-toolbar .rbc-btn-group {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.appointments-calendar .rbc-toolbar .rbc-btn-group button {
+  background: #4c4c4c;
+  color: #f5f5f5;
+  border: none;
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.appointments-calendar .rbc-toolbar .rbc-btn-group button:hover,
+.appointments-calendar .rbc-toolbar .rbc-btn-group button:focus {
+  background: #5a5a5a;
+}
+
+.appointments-calendar .rbc-toolbar button.rbc-active {
+  background: #6a6a6a;
+}
+
+/* Responsive - ajustements pour petits écrans */
+@media (max-width: 768px) {
+  .appointments-calendar .rbc-event-content {
+    font-size: 0.75rem;
+  }
+  
+  .appointments-calendar .rbc-time-view .rbc-event-label {
+    font-size: 0.7rem;
+  }
+  
+  .appointments-calendar .rbc-time-view .rbc-day-slot .rbc-event {
+    padding: 4px 8px;
+  }
+}
