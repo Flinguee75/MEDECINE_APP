@@ -17,6 +17,7 @@ import { Patient, MedicalHistory } from '../../types/Patient';
 import { CreateDocumentDto } from '../../types/Document';
 import { Vitals, Appointment } from '../../types/Appointment';
 import { VitalsDialog } from '../Appointments/VitalsDialog';
+import { WorkflowStepper } from '../../components/WorkflowStepper/WorkflowStepper';
 
 export function PatientMedicalRecord() {
   const { id } = useParams<{ id: string }>();
@@ -122,6 +123,12 @@ export function PatientMedicalRecord() {
           </Typography>
         </Box>
       </Box>
+
+      {/* Workflow Progress Stepper */}
+      <WorkflowStepper
+        appointments={patient.appointments}
+        prescriptions={patient.prescriptions}
+      />
 
       <Grid container spacing={3}>
         {/* Antécédents Médicaux */}

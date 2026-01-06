@@ -3,6 +3,7 @@ import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './pages/Login/Login';
 import { Dashboard } from './pages/Dashboard/Dashboard';
+import { UsersList } from './pages/Users/UsersList';
 import { PatientsList } from './pages/Patients/PatientsList';
 import { AppointmentsList } from './pages/Appointments/AppointmentsList';
 import { AppointmentVitalsPage } from './pages/Appointments/AppointmentVitalsPage';
@@ -72,6 +73,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <ProtectedRoute>
+            <UsersList />
           </ProtectedRoute>
         }
       />

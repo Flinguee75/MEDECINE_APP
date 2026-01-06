@@ -1,6 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 import { Role } from '@prisma/client';
 
@@ -60,5 +67,108 @@ export class AuthService {
     });
 
     return users;
+  }
+
+  async createUser(createUserDto: CreateUserDto) {
+    const { email, password, name, role } = createUserDto;
+
+    // Check if user with this email already exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('Un utilisateur avec cet email existe déjà');
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create the user
+    const user = await this.prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return user;
+  }
+
+  async updateUser(userId: string, updateUserDto: UpdateUserDto) {
+    // Check if user exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+
+    // If email is being updated, check if it's already taken
+    if (updateUserDto.email && updateUserDto.email !== existingUser.email) {
+      const emailTaken = await this.prisma.user.findUnique({
+        where: { email: updateUserDto.email },
+      });
+
+      if (emailTaken) {
+        throw new ConflictException('Cet email est déjà utilisé');
+      }
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+    if (updateUserDto.name) updateData.name = updateUserDto.name;
+    if (updateUserDto.email) updateData.email = updateUserDto.email;
+    if (updateUserDto.role) updateData.role = updateUserDto.role;
+
+    // Hash password if provided
+    if (updateUserDto.password) {
+      updateData.password = await bcrypt.hash(updateUserDto.password, 10);
+    }
+
+    // Update the user
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return user;
+  }
+
+  async deleteUser(userId: string) {
+    // Check if user exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      throw new NotFoundException('Utilisateur non trouvé');
+    }
+
+    // Delete the user
+    await this.prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return { message: 'Utilisateur supprimé avec succès' };
   }
 }
