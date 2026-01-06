@@ -60,8 +60,8 @@ workflow_status:
   - id: "create-ux-design"
     name: "UX Design"
     phase: 2
-    status: "skipped"
-    note: "Desktop-only MVP - Material-UI components used directly"
+    status: "_bmad-output/planning-artifacts/ux-design-specification.md"
+    note: "Express mode completed - Design system, components, patterns ready for implementation"
 
   # Phase 3: Solutioning
   - id: "create-architecture"
@@ -73,9 +73,9 @@ workflow_status:
   - id: "create-epics-and-stories"
     name: "Epics & Stories"
     phase: 3
-    status: "required"
+    status: "in-progress"
     next: true
-    note: "NEXT STEP: Break down remaining work (J6-J7) into stories"
+    note: "CURRENT: Creating UX implementation stories for J6-J7"
 
   - id: "test-design"
     name: "Test Design (System-level)"
