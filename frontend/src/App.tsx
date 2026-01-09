@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+import { CssBaseline, ThemeProvider } from '@mui/material';
+import { medicalTheme } from './theme/medicalTheme';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { Login } from './pages/Login/Login';
 import { Dashboard } from './pages/Dashboard/Dashboard';
 import { UsersList } from './pages/Users/UsersList';
@@ -15,17 +17,8 @@ import { PrescriptionResultsPage } from './pages/Prescriptions/PrescriptionResul
 import { ResultsList } from './pages/Results/ResultsList';
 import { PatientMedicalRecord } from './pages/Patients/PatientMedicalRecord';
 
-// Thème Material-UI personnalisé
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976D2', // Bleu médical
-    },
-    secondary: {
-      main: '#424242', // Gris foncé
-    },
-  },
-});
+// Utilisation du thème médical personnalisé
+// Plus de définition inline - thème complet dans ./theme/medicalTheme.ts
 
 // Composant pour protéger les routes
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -171,11 +164,13 @@ function AppRoutes() {
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={medicalTheme}>
       <CssBaseline />
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
+          <NotificationProvider>
+            <AppRoutes />
+          </NotificationProvider>
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>
