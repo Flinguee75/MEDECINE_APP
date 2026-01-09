@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button,
-  TextField, Grid, Divider, Typography
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Divider,
+  Typography,
 } from '@mui/material';
+import Grid from '@mui/material/GridLegacy';
 import { Vitals } from '../../types/Appointment';
 
 interface VitalsDialogProps {
@@ -13,7 +20,13 @@ interface VitalsDialogProps {
   readOnly?: boolean;
 }
 
-export function VitalsDialog({ open, onClose, onSave, initialVitals, readOnly = false }: VitalsDialogProps) {
+export function VitalsDialog({
+  open,
+  onClose,
+  onSave,
+  initialVitals,
+  readOnly = false,
+}: VitalsDialogProps) {
   const [vitals, setVitals] = useState<Vitals>({
     weight: undefined,
     height: undefined,

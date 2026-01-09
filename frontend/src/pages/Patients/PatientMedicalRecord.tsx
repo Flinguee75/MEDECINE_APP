@@ -1,10 +1,24 @@
 import { useState, useEffect } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import {
-  Container, Paper, Typography, Box, Grid, Chip, Divider, Card, CardContent,
-  List, ListItem, ListItemText, Button, Dialog, DialogTitle, DialogContent,
-  DialogActions, TextField, IconButton
+  Container,
+  Typography,
+  Box,
+  Chip,
+  Card,
+  CardContent,
+  List,
+  ListItem,
+  ListItemText,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  IconButton,
 } from '@mui/material';
+import Grid from '@mui/material/GridLegacy';
 import {
   Person, LocalHospital, Assignment, Description, Add as AddIcon, MonitorHeart
 } from '@mui/icons-material';

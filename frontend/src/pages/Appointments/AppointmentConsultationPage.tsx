@@ -8,13 +8,13 @@ import {
   Chip,
   Container,
   Divider,
-  Grid,
   MenuItem,
   Tab,
   Tabs,
   TextField,
   Typography,
 } from '@mui/material';
+import Grid from '@mui/material/GridLegacy';
 import { useNavigate, useParams } from 'react-router-dom';
 import { appointmentsService } from '../../services/appointmentsService';
 import { prescriptionsService } from '../../services/prescriptionsService';
@@ -322,7 +322,7 @@ export const AppointmentConsultationPage = () => {
       <Card sx={{ mb: 3, border: '1px solid rgba(25, 118, 210, 0.15)', bgcolor: 'rgba(25, 118, 210, 0.04)' }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={8}>
+            <Grid xs={12} md={8}>
               <Typography variant="subtitle2" color="text.secondary">
                 Patient
               </Typography>
@@ -346,7 +346,7 @@ export const AppointmentConsultationPage = () => {
                 )}
               </Box>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid xs={12} md={4}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                 Constantes recentes
               </Typography>
@@ -418,7 +418,7 @@ export const AppointmentConsultationPage = () => {
 
           <TabPanel value={tab} index={0}>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Nom complet"
@@ -426,7 +426,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid item xs={12} md={3}>
+              <Grid xs={12} md={3}>
                 <TextField
                   fullWidth
                   label="Age"
@@ -434,7 +434,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid item xs={12} md={3}>
+              <Grid xs={12} md={3}>
                 <TextField
                   fullWidth
                   label="Sexe"
@@ -442,7 +442,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <TextField
                   fullWidth
                   label="Motif"
@@ -450,7 +450,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <TextField
                   fullWidth
                   label="Notes infirmier (contexte)"
@@ -465,7 +465,7 @@ export const AppointmentConsultationPage = () => {
 
           <TabPanel value={tab} index={1}>
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Allergies"
@@ -473,7 +473,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Maladies chroniques"
@@ -481,7 +481,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Traitements en cours"
@@ -489,7 +489,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Antecedents familiaux"
@@ -497,7 +497,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <TextField
                   fullWidth
                   label="Notes"
@@ -558,7 +558,7 @@ export const AppointmentConsultationPage = () => {
             {labError && <Alert severity="error" sx={{ mb: 2 }}>{labError}</Alert>}
             {labSuccess && <Alert severity="success" sx={{ mb: 2 }}>{labSuccess}</Alert>}
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Type d'analyse"
@@ -567,7 +567,7 @@ export const AppointmentConsultationPage = () => {
                   onChange={(e) => setLabType(e.target.value)}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   select
@@ -579,7 +579,7 @@ export const AppointmentConsultationPage = () => {
                   <MenuItem value="URGENT">Urgente</MenuItem>
                 </TextField>
               </Grid>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <TextField
                   fullWidth
                   label="Commentaire clinique"
@@ -589,7 +589,7 @@ export const AppointmentConsultationPage = () => {
                   minRows={3}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   select
@@ -601,7 +601,7 @@ export const AppointmentConsultationPage = () => {
                   <MenuItem value="NO">Non</MenuItem>
                 </TextField>
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
                   select

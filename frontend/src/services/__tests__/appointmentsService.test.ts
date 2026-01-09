@@ -1,11 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import axios from 'axios';
-import appointmentsService from '../appointmentsService';
-import { AppointmentStatus } from '../../types/appointment';
+import api from '../api';
+import { appointmentsService } from '../appointmentsService';
+import { AppointmentStatus, BillingStatus } from '../../types/Appointment';
 
-// Mock axios
-vi.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+vi.mock('../api', () => ({
+  default: {
+    patch: vi.fn(),
+    get: vi.fn(),
+  },
+}));
+
+const mockedApi = api as unknown as {
+  patch: ReturnType<typeof vi.fn>;
+  get: ReturnType<typeof vi.fn>;
+};
 
 describe('appointmentsService', () => {
   beforeEach(() => {
@@ -25,17 +33,17 @@ describe('appointmentsService', () => {
         },
       };
 
-      mockedAxios.patch.mockResolvedValue(mockResponse);
+      mockedApi.patch.mockResolvedValue(mockResponse);
 
       const result = await appointmentsService.checkIn(appointmentId);
 
-      expect(mockedAxios.patch).toHaveBeenCalledWith(`/appointments/${appointmentId}/check-in`);
+      expect(mockedApi.patch).toHaveBeenCalledWith(`/appointments/${appointmentId}/check-in`);
       expect(result.status).toBe(AppointmentStatus.CHECKED_IN);
       expect(result.checkedInAt).toBeDefined();
     });
 
     it('should handle success response', async () => {
-      mockedAxios.patch.mockResolvedValue({
+      mockedApi.patch.mockResolvedValue({
         data: {
           data: {
             id: 'apt-123',
@@ -53,7 +61,7 @@ describe('appointmentsService', () => {
 
     it('should handle error response', async () => {
       const errorMessage = 'Cannot check in: appointment status must be SCHEDULED';
-      mockedAxios.patch.mockRejectedValue({
+      mockedApi.patch.mockRejectedValue({
         response: {
           data: {
             message: errorMessage,
@@ -93,11 +101,11 @@ describe('appointmentsService', () => {
         },
       };
 
-      mockedAxios.patch.mockResolvedValue(mockResponse);
+      mockedApi.patch.mockResolvedValue(mockResponse);
 
       const result = await appointmentsService.enterVitals(appointmentId, validVitals);
 
-      expect(mockedAxios.patch).toHaveBeenCalledWith(
+      expect(mockedApi.patch).toHaveBeenCalledWith(
         `/appointments/${appointmentId}/vitals`,
         validVitals,
       );
@@ -105,7 +113,7 @@ describe('appointmentsService', () => {
     });
 
     it('should send vitals data in correct format', async () => {
-      mockedAxios.patch.mockResolvedValue({
+      mockedApi.patch.mockResolvedValue({
         data: {
           data: {
             id: 'apt-123',
@@ -116,7 +124,7 @@ describe('appointmentsService', () => {
 
       await appointmentsService.enterVitals('apt-123', validVitals);
 
-      expect(mockedAxios.patch).toHaveBeenCalledWith(
+      expect(mockedApi.patch).toHaveBeenCalledWith(
         '/appointments/apt-123/vitals',
         expect.objectContaining({
           vitals: expect.objectContaining({
@@ -149,14 +157,14 @@ describe('appointmentsService', () => {
         },
       };
 
-      mockedAxios.patch.mockResolvedValue(mockResponse);
+      mockedApi.patch.mockResolvedValue(mockResponse);
 
       const result = await appointmentsService.completeConsultation(
         appointmentId,
-        consultationDto,
+        consultationDto.consultationNotes,
       );
 
-      expect(mockedAxios.patch).toHaveBeenCalledWith(
+      expect(mockedApi.patch).toHaveBeenCalledWith(
         `/appointments/${appointmentId}/consultation`,
         consultationDto,
       );
@@ -167,7 +175,7 @@ describe('appointmentsService', () => {
   describe('closeAppointment', () => {
     const closeDto = {
       billingAmount: 150.0,
-      billingStatus: 'PAID',
+      billingStatus: BillingStatus.PAID,
     };
 
     it('should call PATCH /appointments/:id/close', async () => {
@@ -183,11 +191,15 @@ describe('appointmentsService', () => {
         },
       };
 
-      mockedAxios.patch.mockResolvedValue(mockResponse);
+      mockedApi.patch.mockResolvedValue(mockResponse);
 
-      const result = await appointmentsService.closeAppointment(appointmentId, closeDto);
+      const result = await appointmentsService.close(
+        appointmentId,
+        closeDto.billingAmount,
+        closeDto.billingStatus,
+      );
 
-      expect(mockedAxios.patch).toHaveBeenCalledWith(
+      expect(mockedApi.patch).toHaveBeenCalledWith(
         `/appointments/${appointmentId}/close`,
         closeDto,
       );
@@ -202,7 +214,7 @@ describe('appointmentsService', () => {
         status: AppointmentStatus.SCHEDULED,
       };
 
-      mockedAxios.get.mockResolvedValue({
+      mockedApi.get.mockResolvedValue({
         data: {
           data: [],
         },
@@ -210,7 +222,7 @@ describe('appointmentsService', () => {
 
       await appointmentsService.getAll(filters.doctorId, undefined, filters.status);
 
-      expect(mockedAxios.get).toHaveBeenCalledWith('/appointments', {
+      expect(mockedApi.get).toHaveBeenCalledWith('/appointments', {
         params: {
           doctorId: 'doctor-123',
           status: AppointmentStatus.SCHEDULED,
@@ -219,7 +231,7 @@ describe('appointmentsService', () => {
     });
 
     it('should return empty array when no appointments', async () => {
-      mockedAxios.get.mockResolvedValue({
+      mockedApi.get.mockResolvedValue({
         data: {
           data: [],
         },

@@ -21,7 +21,6 @@ export function PrescriptionsList() {
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [formData, setFormData] = useState<CreatePrescriptionDto>({ text: '', patientId: '' });
-  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
   const [statusFilter, setStatusFilter] = useState<PrescriptionStatus | ''>('');
 
   const canCreate = user?.role === Role.DOCTOR || user?.role === Role.ADMIN;
@@ -76,7 +75,9 @@ export function PrescriptionsList() {
     const colors = {
       [PrescriptionStatus.CREATED]: 'default',
       [PrescriptionStatus.SENT_TO_LAB]: 'info',
+      [PrescriptionStatus.SAMPLE_COLLECTED]: 'info',
       [PrescriptionStatus.IN_PROGRESS]: 'warning',
+      [PrescriptionStatus.RESULTS_AVAILABLE]: 'success',
       [PrescriptionStatus.COMPLETED]: 'success',
     };
     return colors[status] as any;
@@ -93,8 +94,10 @@ export function PrescriptionsList() {
     if (user?.role === Role.ADMIN) {
       const transitions: Record<PrescriptionStatus, PrescriptionStatus | null> = {
         [PrescriptionStatus.CREATED]: PrescriptionStatus.SENT_TO_LAB,
-        [PrescriptionStatus.SENT_TO_LAB]: PrescriptionStatus.IN_PROGRESS,
+        [PrescriptionStatus.SENT_TO_LAB]: PrescriptionStatus.SAMPLE_COLLECTED,
+        [PrescriptionStatus.SAMPLE_COLLECTED]: PrescriptionStatus.IN_PROGRESS,
         [PrescriptionStatus.IN_PROGRESS]: PrescriptionStatus.COMPLETED,
+        [PrescriptionStatus.RESULTS_AVAILABLE]: PrescriptionStatus.COMPLETED,
         [PrescriptionStatus.COMPLETED]: null,
       };
       return transitions[current];

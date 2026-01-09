@@ -39,7 +39,7 @@ const locales = {
 const localizer = dateFnsLocalizer({
   format,
   parse,
-  startOfWeek: (date) => startOfWeekFn(date, { locale: fr }),
+  startOfWeek: (date: Date) => startOfWeekFn(date, { locale: fr }),
   getDay,
   locales,
 });
@@ -335,8 +335,8 @@ export const AppointmentsList = () => {
                   event: 'Rendez-vous',
                   noEventsInRange: 'Aucun rendez-vous',
                 }}
-                eventPropGetter={(event) => {
-                  const status = event.resource.status;
+                eventPropGetter={(event: AppointmentEvent) => {
+                  const status = (event.resource as Appointment).status;
                   const colorMap: Record<AppointmentStatus, string> = {
                     [AppointmentStatus.SCHEDULED]: '#1a73e8',
                     [AppointmentStatus.CHECKED_IN]: '#00897b',

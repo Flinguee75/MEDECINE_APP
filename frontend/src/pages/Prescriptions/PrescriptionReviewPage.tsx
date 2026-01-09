@@ -7,11 +7,11 @@ import {
   CardContent,
   Container,
   Divider,
-  Grid,
   Link,
   TextField,
   Typography,
 } from '@mui/material';
+import Grid from '@mui/material/GridLegacy';
 import { useNavigate, useParams } from 'react-router-dom';
 import { prescriptionsService } from '../../services/prescriptionsService';
 import { documentsService } from '../../services/documentsService';

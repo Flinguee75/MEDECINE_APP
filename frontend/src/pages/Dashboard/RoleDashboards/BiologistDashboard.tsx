@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import {
   Box,
   Container,
-  Grid,
   Typography,
   CircularProgress,
 } from '@mui/material';
+import Grid from '@mui/material/GridLegacy';
 import { Science, Biotech } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { prescriptionsService } from '../../../services/prescriptionsService';

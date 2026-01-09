@@ -1,15 +1,34 @@
 import { useState, useEffect } from 'react';
 import {
-  Container, Paper, Typography, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  TextField, Box, MenuItem, Select, FormControl, InputLabel, Grid, Divider
+  Container,
+  Paper,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Box,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Divider,
 } from '@mui/material';
+import Grid from '@mui/material/GridLegacy';
 import { Add as AddIcon } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { Role } from '../../types/User';
 import { resultsService } from '../../services/resultsService';
 import { prescriptionsService } from '../../services/prescriptionsService';
-import { Result, CreateResultDto, BiologicalData } from '../../types/Result';
+import { Result, CreateResultDto } from '../../types/Result';
 import { Prescription, PrescriptionStatus } from '../../types/Prescription';
 
 export function ResultsList() {
@@ -190,7 +209,7 @@ export function ResultsList() {
 
           <Divider sx={{ my: 3 }}>Hématologie</Divider>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -200,7 +219,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.1' }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -210,7 +229,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.1' }}
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid xs={4}>
               <TextField
                 fullWidth
                 type="number"
@@ -219,7 +238,7 @@ export function ResultsList() {
                 onChange={(e) => updateFormField('hematology', 'platelets', e.target.value)}
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid xs={4}>
               <TextField
                 fullWidth
                 type="number"
@@ -229,7 +248,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.1' }}
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid xs={4}>
               <TextField
                 fullWidth
                 type="number"
@@ -243,7 +262,7 @@ export function ResultsList() {
 
           <Divider sx={{ my: 3 }}>Biochimie</Divider>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -253,7 +272,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.01' }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -263,7 +282,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.1' }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -273,7 +292,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.01' }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -287,7 +306,7 @@ export function ResultsList() {
 
           <Divider sx={{ my: 3 }}>Bilan Lipidique</Divider>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -297,7 +316,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.01' }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -307,7 +326,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.01' }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -317,7 +336,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.01' }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -353,7 +372,7 @@ export function ResultsList() {
         <DialogContent>
           <Divider sx={{ my: 2 }}>Hématologie</Divider>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -364,7 +383,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.1' }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -375,7 +394,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.1' }}
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid xs={4}>
               <TextField
                 fullWidth
                 type="number"
@@ -385,7 +404,7 @@ export function ResultsList() {
                 disabled={!canEdit}
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid xs={4}>
               <TextField
                 fullWidth
                 type="number"
@@ -396,7 +415,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.1' }}
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid xs={4}>
               <TextField
                 fullWidth
                 type="number"
@@ -411,7 +430,7 @@ export function ResultsList() {
 
           <Divider sx={{ my: 2 }}>Biochimie</Divider>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -422,7 +441,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.01' }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -433,7 +452,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.1' }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -444,7 +463,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.01' }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -459,7 +478,7 @@ export function ResultsList() {
 
           <Divider sx={{ my: 2 }}>Bilan Lipidique</Divider>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -470,7 +489,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.01' }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -481,7 +500,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.01' }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"
@@ -492,7 +511,7 @@ export function ResultsList() {
                 inputProps={{ step: '0.01' }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <TextField
                 fullWidth
                 type="number"

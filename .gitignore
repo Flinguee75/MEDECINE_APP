@@ -13,6 +13,10 @@ frontend/.env
 backend/dist/
 frontend/dist/
 frontend/out/
+.github
+.specify
+_bmad
+claude-sub-agent
 
 # Database
 backend/prisma/migrations/

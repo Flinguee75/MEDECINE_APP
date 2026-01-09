@@ -33,7 +33,7 @@ export function useAutoSave({
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastValueRef = useRef<string>(value);
   const isMountedRef = useRef(true);
 

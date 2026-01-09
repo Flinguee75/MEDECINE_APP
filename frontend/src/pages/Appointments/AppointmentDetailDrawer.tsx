@@ -81,6 +81,27 @@ export const AppointmentDetailDrawer = ({
           bgColor: '#fff8e1',
           icon: <MedicalServices sx={{ fontSize: 18 }} />,
         };
+      case AppointmentStatus.CHECKED_IN:
+        return {
+          label: 'Enregistré',
+          color: '#00897b',
+          bgColor: '#e0f2f1',
+          icon: <Event sx={{ fontSize: 18 }} />,
+        };
+      case AppointmentStatus.IN_CONSULTATION:
+        return {
+          label: 'En consultation',
+          color: '#1976d2',
+          bgColor: '#e3f2fd',
+          icon: <MedicalServices sx={{ fontSize: 18 }} />,
+        };
+      case AppointmentStatus.CONSULTATION_COMPLETED:
+        return {
+          label: 'Consultation terminée',
+          color: '#388e3c',
+          bgColor: '#e8f5e9',
+          icon: <CheckCircle sx={{ fontSize: 18 }} />,
+        };
       case AppointmentStatus.COMPLETED:
         return {
           label: 'Terminé',
@@ -94,6 +115,13 @@ export const AppointmentDetailDrawer = ({
           color: '#c62828',
           bgColor: '#ffebee',
           icon: <CancelIcon sx={{ fontSize: 18 }} />,
+        };
+      default:
+        return {
+          label: 'Statut inconnu',
+          color: '#5f6368',
+          bgColor: '#f5f5f5',
+          icon: <Event sx={{ fontSize: 18 }} />,
         };
     }
   };

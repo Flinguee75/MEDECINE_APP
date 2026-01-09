@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
+  Paper,
+  Chip,
+  CircularProgress,
+  Alert,
+} from '@mui/material';
+import {
   Timeline,
   TimelineItem,
   TimelineSeparator,
@@ -9,11 +15,7 @@ import {
   TimelineContent,
   TimelineDot,
   TimelineOppositeContent,
-  Paper,
-  Chip,
-  CircularProgress,
-  Alert,
-} from '@mui/material';
+} from '@mui/lab';
 import {
   Edit as EditIcon,
   Info as InfoIcon,

@@ -1,4 +1,5 @@
 import { Patient } from './Patient';
+import type { BiologicalData } from './Result';
 
 export enum PrescriptionStatus {
   CREATED = 'CREATED',
@@ -41,6 +42,7 @@ export interface Prescription {
   result?: {
     id: string;
     text: string;
+    data?: BiologicalData;
     interpretation?: string;
     reviewedBy?: string;
     reviewedAt?: string;

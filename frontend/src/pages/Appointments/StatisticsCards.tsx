@@ -1,4 +1,5 @@
-import { Box, Card, CardContent, Grid, Typography } from '@mui/material';
+import { Box, Card, CardContent, Typography } from '@mui/material';
+import Grid from '@mui/material/GridLegacy';
 import {
   CalendarToday,
   EventAvailable,

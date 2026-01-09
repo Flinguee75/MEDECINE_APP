@@ -8,14 +8,13 @@ import {
   TextField,
   MenuItem,
   Box,
-  Typography,
   Divider,
   Alert,
   CircularProgress,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
 import { fr } from 'date-fns/locale';
 import { Appointment } from '../../types/Appointment';
 import { User, Role } from '../../types/User';
@@ -52,7 +51,7 @@ export function EditAppointmentModal({
     if (appointment) {
       setDate(new Date(appointment.date));
       setMotif(appointment.motif);
-      setDoctorId(appointment.doctor.id);
+      setDoctorId(appointment.doctor?.id ?? '');
       setReason('');
       setError(null);
     }
@@ -98,6 +97,11 @@ export function EditAppointmentModal({
       return;
     }
 
+    if (!doctorId) {
+      setError('Le médecin est obligatoire');
+      return;
+    }
+
     if (!reason.trim()) {
       setError('La raison de la modification est obligatoire pour la traçabilité');
       return;
@@ -132,7 +136,7 @@ export function EditAppointmentModal({
       if (appointment) {
         setDate(new Date(appointment.date));
         setMotif(appointment.motif);
-        setDoctorId(appointment.doctor.id);
+        setDoctorId(appointment.doctor?.id ?? '');
       }
       setReason('');
       setError(null);

@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react';
-import {  Box,
-  Container,
-  Grid,
-  Typography,
-  CircularProgress,
-} from '@mui/material';
+import { Box, Container, Typography, CircularProgress } from '@mui/material';
+import Grid from '@mui/material/GridLegacy';
 import { MonitorHeart, Science } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { appointmentsService } from '../../../services/appointmentsService';

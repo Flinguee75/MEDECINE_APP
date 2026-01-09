@@ -3,11 +3,11 @@ import {
   Box,
   Button,
   Container,
-  Grid,
   Typography,
   CircularProgress,
   Alert,
 } from '@mui/material';
+import Grid from '@mui/material/GridLegacy';
 import { MedicalServices, Assessment, EventNote } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';

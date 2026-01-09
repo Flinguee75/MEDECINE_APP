@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Container,
-  Grid,
   Typography,
   Button,
   CircularProgress,
@@ -14,6 +13,7 @@ import {
   MenuItem,
   Alert,
 } from '@mui/material';
+import Grid from '@mui/material/GridLegacy';
 import { PersonAdd, AssignmentTurnedIn, People } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { appointmentsService } from '../../../services/appointmentsService';
