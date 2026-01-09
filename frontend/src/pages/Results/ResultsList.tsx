@@ -23,7 +23,8 @@ import {
   Divider,
 } from '@mui/material';
 import Grid from '@mui/material/GridLegacy';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, ArrowBack } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Role } from '../../types/User';
 import { resultsService } from '../../services/resultsService';
@@ -33,6 +34,7 @@ import { Prescription, PrescriptionStatus } from '../../types/Prescription';
 
 export function ResultsList() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [results, setResults] = useState<Result[]>([]);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,6 +143,14 @@ export function ResultsList() {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+      {/* Bouton retour en haut à gauche */}
+      <Box sx={{ mb: 2 }}>
+        <Button variant="outlined" onClick={() => navigate('/dashboard')} startIcon={<ArrowBack />}>
+          Retour
+        </Button>
+      </Box>
+
+      {/* Header avec titre et bouton nouveau */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4">Résultats d'Analyses</Typography>
         {canCreate && (

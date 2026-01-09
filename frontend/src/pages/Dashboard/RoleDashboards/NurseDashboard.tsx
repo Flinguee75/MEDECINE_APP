@@ -112,39 +112,69 @@ export function NurseDashboard() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Header - Point d'entrée "Patients à préparer" selon spécs UX */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'primary.main' }}>
-          Patients à préparer
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-          {new Date().toLocaleDateString('fr-FR', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          })}
-        </Typography>
+      {/* Header avec titre, date et actions rapides */}
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'primary.main', mb: 0.5 }}>
+            Soins Infirmiers
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            {new Date().toLocaleDateString('fr-FR', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </Typography>
+        </Box>
         
-        {/* Alert prioritaire si échantillons urgents */}
-        {samplesToCollect.length > 0 && (
-          <Alert 
-            severity="warning" 
-            sx={{ mb: 3 }}
-            action={
-              <Button 
-                color="inherit" 
-                size="small"
-                onClick={() => document.getElementById('samples-section')?.scrollIntoView()}
-              >
-                Voir
-              </Button>
-            }
+        {/* Boutons d'action rapide - Déplacés en haut */}
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            startIcon={<EventAvailable />}
+            onClick={() => navigate('/appointments')}
           >
-            {samplesToCollect.length} échantillon{samplesToCollect.length > 1 ? 's' : ''} à collecter pour le laboratoire
-          </Alert>
-        )}
+            Planning
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<Assignment />}
+            onClick={() => navigate('/prescriptions')}
+          >
+            Prescriptions
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<MonitorHeart />}
+            onClick={() => sortedAppointments.length > 0 && handleEnterVitals(sortedAppointments[0].id)}
+            disabled={sortedAppointments.length === 0}
+            sx={{ boxShadow: 2 }}
+          >
+            {sortedAppointments.length > 0 ? 'Prochaines constantes' : 'Aucun patient'}
+          </Button>
+        </Box>
       </Box>
+
+      {/* Alert prioritaire si échantillons urgents */}
+      {samplesToCollect.length > 0 && (
+        <Alert 
+          severity="warning" 
+          sx={{ mb: 3 }}
+          action={
+            <Button 
+              color="inherit" 
+              size="small"
+              onClick={() => document.getElementById('samples-section')?.scrollIntoView()}
+            >
+              Voir
+            </Button>
+          }
+        >
+          {samplesToCollect.length} échantillon{samplesToCollect.length > 1 ? 's' : ''} à collecter pour le laboratoire
+        </Alert>
+      )}
+
 
       {/* Cards de statistiques avec badges notifications */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -412,47 +442,6 @@ export function NurseDashboard() {
           )}
         </CardContent>
       </Card>
-
-      {/* Boutons d'action rapide */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <Button
-            variant="outlined"
-            size="large"
-            fullWidth
-            startIcon={<EventAvailable />}
-            onClick={() => navigate('/appointments')}
-            sx={{ py: 2 }}
-          >
-            Planning complet
-          </Button>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Button
-            variant="outlined"
-            size="large"
-            fullWidth
-            startIcon={<Assignment />}
-            onClick={() => navigate('/prescriptions')}
-            sx={{ py: 2 }}
-          >
-            Toutes les prescriptions
-          </Button>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Button
-            variant="contained"
-            size="large"
-            fullWidth
-            startIcon={<MonitorHeart />}
-            onClick={() => sortedAppointments.length > 0 && handleEnterVitals(sortedAppointments[0].id)}
-            disabled={sortedAppointments.length === 0}
-            sx={{ py: 2 }}
-          >
-            {sortedAppointments.length > 0 ? 'Prochaines constantes' : 'Aucun patient'}
-          </Button>
-        </Grid>
-      </Grid>
     </Container>
   );
 }

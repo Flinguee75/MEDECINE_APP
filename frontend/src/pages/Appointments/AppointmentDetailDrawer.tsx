@@ -262,7 +262,7 @@ export const AppointmentDetailDrawer = ({
                 </Typography>
               </Box>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {appointment.doctor?.name || 'Dr. Non assigné'}
+                {appointment.doctor?.name || 'Non assigné'}
               </Typography>
               {appointment.doctor && (
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>

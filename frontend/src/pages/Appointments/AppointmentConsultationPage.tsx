@@ -14,6 +14,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { ArrowBack } from '@mui/icons-material';
 import Grid from '@mui/material/GridLegacy';
 import { useNavigate, useParams } from 'react-router-dom';
 import { appointmentsService } from '../../services/appointmentsService';
@@ -294,22 +295,25 @@ export const AppointmentConsultationPage = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {/* Bouton retour en haut à gauche */}
+      <Box sx={{ mb: 2 }}>
+        <Button variant="outlined" onClick={() => navigate(-1)} startIcon={<ArrowBack />}>
+          Retour
+        </Button>
+      </Box>
+
+      {/* Header avec titre et action */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
           Consultation Medecin
         </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant="outlined" onClick={() => navigate(-1)}>
-            Retour
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleCompleteConsultation}
-            disabled={!isConsultable || saving}
-          >
-            {saving ? 'Enregistrement...' : 'Terminer la consultation'}
-          </Button>
-        </Box>
+        <Button
+          variant="contained"
+          onClick={handleCompleteConsultation}
+          disabled={!isConsultable || saving}
+        >
+          {saving ? 'Enregistrement...' : 'Terminer la consultation'}
+        </Button>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

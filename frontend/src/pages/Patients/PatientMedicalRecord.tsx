@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 import Grid from '@mui/material/GridLegacy';
 import {
-  Person, LocalHospital, Assignment, Description, Add as AddIcon, MonitorHeart, Science
+  Person, LocalHospital, Assignment, Description, Add as AddIcon, MonitorHeart, Science, ArrowBack
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import { Role } from '../../types/User';
@@ -38,6 +38,7 @@ import { WorkflowStatusChip } from '../../components/StatusChips';
 
 export function PatientMedicalRecord() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loading, setLoading] = useState(true);
@@ -145,6 +146,14 @@ export function PatientMedicalRecord() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {/* Bouton retour en haut à gauche */}
+      <Box sx={{ mb: 2 }}>
+        <Button variant="outlined" onClick={() => navigate('/patients')} startIcon={<ArrowBack />}>
+          Retour
+        </Button>
+      </Box>
+
+      {/* Header avec titre patient */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
           <Typography variant="h4">

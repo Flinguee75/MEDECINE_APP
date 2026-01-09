@@ -9,6 +9,7 @@ import {
   Container,
   Typography,
 } from '@mui/material';
+import { ArrowBack } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { appointmentsService } from '../../services/appointmentsService';
 import { Appointment, AppointmentStatus } from '../../types/Appointment';
@@ -66,18 +67,21 @@ export const AppointmentVitalsPage = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            Saisie des constantes
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Renseignez les constantes vitales de base
-          </Typography>
-        </Box>
-        <Button variant="outlined" onClick={() => navigate(-1)}>
+      {/* Bouton retour en haut à gauche */}
+      <Box sx={{ mb: 2 }}>
+        <Button variant="outlined" onClick={() => navigate(-1)} startIcon={<ArrowBack />}>
           Retour
         </Button>
+      </Box>
+
+      {/* Header avec titre */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          Saisie des constantes
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Renseignez les constantes vitales de base
+        </Typography>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -96,7 +100,7 @@ export const AppointmentVitalsPage = () => {
             {appointment.patient?.firstName} {appointment.patient?.lastName}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {appointment.doctor?.name ? `Dr. ${appointment.doctor.name}` : ''}
+            {appointment.doctor?.name || ''}
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
             <Chip label={`Date/heure: ${new Date().toLocaleString('fr-FR')}`} size="small" />

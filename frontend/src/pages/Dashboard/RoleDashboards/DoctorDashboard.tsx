@@ -123,31 +123,52 @@ export function DoctorDashboard() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Header - Point d'entrée direct "Consultations du jour" selon spécs UX */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'primary.main' }}>
-          Consultations du jour
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-          {new Date().toLocaleDateString('fr-FR', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          })}
-        </Typography>
+      {/* Header avec nom médecin, date et actions rapides */}
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'primary.main', mb: 0.5 }}>
+            {user?.name?.startsWith('Dr.') ? user.name : `Dr. ${user?.name}`}
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            {new Date().toLocaleDateString('fr-FR', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </Typography>
+        </Box>
         
-        {/* Alert prioritaire - Résultats à réviser selon spécs UX */}
-        {resultsToReview.length > 0 && (
-          <Alert 
-            severity="warning" 
-            sx={{ mb: 3 }}
-            action={
-              <Button 
-                color="inherit" 
-                size="small"
-                onClick={() => navigate('/results')}
-              >
+        {/* Boutons d'action rapide - Déplacés en haut */}
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            startIcon={<EventNote />}
+            onClick={() => navigate('/appointments')}
+          >
+            Agenda
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<Assessment />}
+            onClick={() => navigate('/results')}
+          >
+            Résultats
+          </Button>
+        </Box>
+      </Box>
+
+      {/* Alert prioritaire - Résultats à réviser selon spécs UX */}
+      {resultsToReview.length > 0 && (
+        <Alert 
+          severity="warning" 
+          sx={{ mb: 3 }}
+          action={
+            <Button 
+              color="inherit" 
+              size="small"
+              onClick={() => navigate('/results')}
+            >
                 Voir tout
               </Button>
             }
@@ -156,7 +177,6 @@ export function DoctorDashboard() {
             {' '}disponible{resultsToReview.length > 1 ? 's' : ''} à réviser
           </Alert>
         )}
-      </Box>
 
       {/* Cards statistiques avec badges - Opportunity #2: Contextual CTAs */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -430,34 +450,6 @@ export function DoctorDashboard() {
           </CardContent>
         </Card>
       )}
-
-      {/* Actions rapides */}
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
-          <Button
-            variant="outlined"
-            fullWidth
-            size="large"
-            startIcon={<EventNote />}
-            onClick={() => navigate('/appointments')}
-            sx={{ py: 2 }}
-          >
-            Voir tout le planning
-          </Button>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Button
-            variant="outlined"
-            fullWidth
-            size="large"
-            startIcon={<Assignment />}
-            onClick={() => navigate('/prescriptions')}
-            sx={{ py: 2 }}
-          >
-            Mes prescriptions
-          </Button>
-        </Grid>
-      </Grid>
     </Container>
   );
 }

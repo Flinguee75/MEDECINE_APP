@@ -276,19 +276,47 @@ export function SecretaryDashboard() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Header - Point d'entrée "Gestion Administrative" selon spécs UX */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'primary.main' }}>
-          Gestion Administrative
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-          {new Date().toLocaleDateString('fr-FR', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          })}
-        </Typography>
+      {/* Header avec rôle, date et actions rapides */}
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'primary.main', mb: 0.5 }}>
+            Secrétariat Médical
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            {new Date().toLocaleDateString('fr-FR', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </Typography>
+        </Box>
+        
+        {/* Boutons d'action rapide - Déplacés en haut selon retour UX */}
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            startIcon={<Event />}
+            onClick={() => navigate('/appointments')}
+          >
+            Calendrier
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<People />}
+            onClick={() => navigate('/patients')}
+          >
+            Patients
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<PersonAdd />}
+            onClick={handleOpenCreate}
+            sx={{ boxShadow: 2 }}
+          >
+            Nouveau RDV
+          </Button>
+        </Box>
       </Box>
 
       {/* Cards de statistiques avec badges notifications */}
@@ -559,46 +587,6 @@ export function SecretaryDashboard() {
           )}
         </CardContent>
       </Card>
-
-      {/* Boutons d'action rapide */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <Button
-            variant="outlined"
-            size="large"
-            fullWidth
-            startIcon={<Event />}
-            onClick={() => navigate('/appointments')}
-            sx={{ py: 2 }}
-          >
-            Calendrier complet
-          </Button>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Button
-            variant="outlined"
-            size="large"
-            fullWidth
-            startIcon={<People />}
-            onClick={() => navigate('/patients')}
-            sx={{ py: 2 }}
-          >
-            Gestion patients
-          </Button>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Button
-            variant="contained"
-            size="large"
-            fullWidth
-            startIcon={<PersonAdd />}
-            onClick={handleOpenCreate}
-            sx={{ py: 2 }}
-          >
-            Nouveau rendez-vous
-          </Button>
-        </Grid>
-      </Grid>
 
       {/* Dialogs */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
