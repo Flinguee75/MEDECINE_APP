@@ -4,7 +4,6 @@ import {
   Container,
   Typography,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -12,9 +11,30 @@ import {
   TextField,
   MenuItem,
   Alert,
+  Card,
+  CardContent,
+  Badge,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from '@mui/material';
 import Grid from '@mui/material/GridLegacy';
-import { PersonAdd, AssignmentTurnedIn, People } from '@mui/icons-material';
+import { 
+  PersonAdd, 
+  People, 
+  EventAvailable,
+  CheckCircle,
+  Person,
+  AccessTime,
+  Receipt,
+  Event,
+  MonetizationOn,
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { appointmentsService } from '../../../services/appointmentsService';
 import { patientsService } from '../../../services/patientsService';
@@ -22,9 +42,7 @@ import { usersService } from '../../../services/usersService';
 import { Appointment, AppointmentStatus, BillingStatus, CreateAppointmentData } from '../../../types/Appointment';
 import { Patient } from '../../../types/Patient';
 import { User } from '../../../types/User';
-import { StatCard } from '../../../components/StatCard';
-import { QuickActionCard } from '../../../components/QuickActionCard';
-import { EmptyState } from '../../../components/EmptyState';
+import { WorkflowStatusChip } from '../../../components/StatusChips';
 import { addDays, format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -234,105 +252,355 @@ export function SecretaryDashboard() {
   const isMotifValid = motifChoice === 'AUTRE' ? Boolean(formData.motif.trim()) : true;
   const isFormValid = Boolean(formData.patientId && formData.doctorId && formData.date && isMotifValid);
 
+  // Loading skeleton selon spécs UX - jamais de page blanche
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Box sx={{ mb: 3 }}>
+          <Skeleton variant="text" width={350} height={48} />
+        </Box>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4}>
+            <Skeleton variant="rectangular" height={140} sx={{ borderRadius: 2 }} />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Skeleton variant="rectangular" height={140} sx={{ borderRadius: 2 }} />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Skeleton variant="rectangular" height={140} sx={{ borderRadius: 2 }} />
+          </Grid>
+        </Grid>
+      </Container>
     );
   }
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Tableau de bord Secrétariat
-      </Typography>
+      {/* Header - Point d'entrée "Gestion Administrative" selon spécs UX */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'primary.main' }}>
+          Gestion Administrative
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+          {new Date().toLocaleDateString('fr-FR', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          })}
+        </Typography>
+      </Box>
 
+      {/* Cards de statistiques avec badges notifications */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} md={4}>
-          <StatCard
-            title="Rendez-vous à enregistrer"
-            value={scheduledAppointments.length}
-            icon={<PersonAdd />}
-            color="#1976D2"
-          />
+          <Card 
+            sx={{ 
+              height: '100%', 
+              cursor: scheduledAppointments.length > 0 ? 'pointer' : 'default',
+              border: scheduledAppointments.length > 0 ? '2px solid' : '1px solid',
+              borderColor: scheduledAppointments.length > 0 ? 'primary.main' : 'divider'
+            }}
+            onClick={() => scheduledAppointments.length > 0 && document.getElementById('check-in-section')?.scrollIntoView()}
+          >
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    Check-in à effectuer
+                  </Typography>
+                  <Typography variant="h3" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                    {scheduledAppointments.length}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Patients arrivés
+                  </Typography>
+                </Box>
+                <Badge 
+                  badgeContent={scheduledAppointments.length} 
+                  color="primary"
+                  sx={{ 
+                    '& .MuiBadge-badge': { 
+                      fontSize: '0.75rem',
+                      display: scheduledAppointments.length > 0 ? 'block' : 'none'
+                    } 
+                  }}
+                >
+                  <EventAvailable sx={{ fontSize: 40, color: 'primary.main', opacity: 0.7 }} />
+                </Badge>
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
+
         <Grid item xs={12} md={4}>
-          <StatCard
-            title="Consultations à clôturer"
-            value={consultationCompleted.length}
-            icon={<AssignmentTurnedIn />}
-            color="#2e7d32"
-          />
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    En attente de clôture
+                  </Typography>
+                  <Typography variant="h3" sx={{ color: 'warning.main', fontWeight: 600 }}>
+                    {consultationCompleted.length}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Consultations terminées
+                  </Typography>
+                </Box>
+                <MonetizationOn sx={{ fontSize: 40, color: 'warning.main', opacity: 0.7 }} />
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
+
         <Grid item xs={12} md={4}>
-          <StatCard
-            title="Patients enregistrés"
-            value={patientsCount}
-            icon={<People />}
-            color="#6a1b9a"
-          />
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    Patients enregistrés
+                  </Typography>
+                  <Typography variant="h3" sx={{ color: 'success.main', fontWeight: 600 }}>
+                    {patientsCount}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Base de données
+                  </Typography>
+                </Box>
+                <People sx={{ fontSize: 40, color: 'success.main', opacity: 0.7 }} />
+              </Box>
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
 
-      <Box sx={{ mb: 4 }}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6">Enregistrements aujourd'hui</Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="outlined" onClick={() => navigate('/appointments')}>
-              Voir calendrier
-            </Button>
-            <Button variant="outlined" onClick={() => navigate('/patients')}>
-              Gérer patients
-            </Button>
-            <Button variant="outlined" onClick={handleOpenCreate}>
-              Nouveau rendez-vous
-            </Button>
+      {/* Section Check-in - Action prioritaire selon spécs UX */}
+      <Card id="check-in-section" sx={{ mb: 4 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: 500, color: 'primary.main' }}>
+              Check-in Patients
+            </Typography>
+            <Badge badgeContent={scheduledAppointments.length} color="primary">
+              <EventAvailable />
+            </Badge>
           </Box>
-        </Box>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        {scheduledAppointments.length === 0 ? (
-          <EmptyState message="Aucun rendez-vous à enregistrer" />
-        ) : (
-          scheduledAppointments.map((apt) => (
-            <QuickActionCard
-              key={apt.id}
-              title={`${apt.patient?.firstName} ${apt.patient?.lastName}`}
-              subtitle={`${new Date(apt.date).toLocaleDateString()} - ${apt.motif}`}
-              status="Planifié"
-              statusColor="default"
-              actionLabel="Enregistrer"
-              onAction={() => handleCheckIn(apt.id)}
-              time={new Date(apt.date).toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            />
-          ))
-        )}
-      </Box>
 
-      <Box>
-        <Typography variant="h6" gutterBottom>
-          Consultations à clôturer
-        </Typography>
-        {consultationCompleted.length === 0 ? (
-          <EmptyState message="Aucune consultation à clôturer" />
-        ) : (
-          consultationCompleted.map((apt) => (
-            <QuickActionCard
-              key={apt.id}
-              title={`${apt.patient?.firstName} ${apt.patient?.lastName}`}
-              subtitle={`Dr. ${apt.doctor?.name} - ${apt.motif}`}
-              status="Consultation terminée"
-              statusColor="success"
-              actionLabel="Clôturer"
-              onAction={() => handleClose(apt.id)}
-            />
-          ))
-        )}
-      </Box>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          
+          {scheduledAppointments.length === 0 ? (
+            <Box textAlign="center" p={4}>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Tous les patients sont enregistrés
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Aucun patient en attente de check-in pour le moment.
+              </Typography>
+              <Button variant="outlined" onClick={handleOpenCreate}>
+                Créer un nouveau rendez-vous
+              </Button>
+            </Box>
+          ) : (
+            <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: 'grey.50' }}>
+                    <TableCell sx={{ fontWeight: 600 }}>Patient</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Heure RDV</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Motif</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Médecin</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Statut</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600 }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {scheduledAppointments.map((appointment) => (
+                    <TableRow key={appointment.id} hover>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Person sx={{ color: 'primary.main', mr: 1 }} />
+                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            {appointment.patient?.firstName} {appointment.patient?.lastName}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <AccessTime sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
+                          <Typography variant="body2">
+                            {new Date(appointment.date).toLocaleTimeString('fr-FR', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary">
+                          {appointment.motif}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          Dr. {appointment.doctor?.name}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <WorkflowStatusChip status={appointment.status} />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Button
+                          variant="contained"
+                          size="large"
+                          startIcon={<CheckCircle />}
+                          onClick={() => handleCheckIn(appointment.id)}
+                          sx={{ 
+                            minWidth: 120,
+                            fontWeight: 600
+                          }}
+                        >
+                          Check-in
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </CardContent>
+      </Card>
 
+      {/* Section Clôture administrative */}
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: 500, color: 'warning.main' }}>
+              Clôture & Facturation
+            </Typography>
+            <Badge badgeContent={consultationCompleted.length} color="warning">
+              <Receipt />
+            </Badge>
+          </Box>
+
+          {consultationCompleted.length === 0 ? (
+            <Box textAlign="center" p={4}>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Aucune consultation à clôturer
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Toutes les consultations ont été clôturées et facturées.
+              </Typography>
+            </Box>
+          ) : (
+            <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: 'grey.50' }}>
+                    <TableCell sx={{ fontWeight: 600 }}>Patient</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Médecin</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Motif</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Statut</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600 }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {consultationCompleted.map((appointment) => (
+                    <TableRow key={appointment.id} hover>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Person sx={{ color: 'primary.main', mr: 1 }} />
+                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            {appointment.patient?.firstName} {appointment.patient?.lastName}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          Dr. {appointment.doctor?.name}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary">
+                          {appointment.motif}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {new Date(appointment.date).toLocaleDateString('fr-FR')}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <WorkflowStatusChip status={appointment.status} />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Button
+                          variant="contained"
+                          color="warning"
+                          size="large"
+                          startIcon={<Receipt />}
+                          onClick={() => handleClose(appointment.id)}
+                          sx={{ 
+                            minWidth: 120,
+                            fontWeight: 600
+                          }}
+                        >
+                          Clôturer
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Boutons d'action rapide */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={4}>
+          <Button
+            variant="outlined"
+            size="large"
+            fullWidth
+            startIcon={<Event />}
+            onClick={() => navigate('/appointments')}
+            sx={{ py: 2 }}
+          >
+            Calendrier complet
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Button
+            variant="outlined"
+            size="large"
+            fullWidth
+            startIcon={<People />}
+            onClick={() => navigate('/patients')}
+            sx={{ py: 2 }}
+          >
+            Gestion patients
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Button
+            variant="contained"
+            size="large"
+            fullWidth
+            startIcon={<PersonAdd />}
+            onClick={handleOpenCreate}
+            sx={{ py: 2 }}
+          >
+            Nouveau rendez-vous
+          </Button>
+        </Grid>
+      </Grid>
+
+      {/* Dialogs */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>Nouveau Rendez-vous</DialogTitle>
         <DialogContent>

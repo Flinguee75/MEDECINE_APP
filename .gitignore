@@ -16,6 +16,7 @@ frontend/out/
 .github
 .specify
 _bmad
+_bmad-output
 claude-sub-agent
 
 # Database
