@@ -1,10 +1,33 @@
-import { Stepper, Step, StepLabel, Box, styled } from '@mui/material';
-import { CheckCircle } from '@mui/icons-material';
+import { 
+  Stepper, 
+  Step, 
+  StepLabel, 
+  styled,
+  Card,
+  CardContent,
+  Typography,
+  Chip,
+  StepConnector,
+  stepConnectorClasses,
+} from '@mui/material';
+import { 
+  CheckCircle,
+  Person,
+  EventAvailable,
+  Assignment,
+  MedicalServices,
+  Science,
+  Biotech,
+  Assessment,
+  TaskAlt,
+} from '@mui/icons-material';
 import { AppointmentStatus } from '../../types/Appointment';
 import { PrescriptionStatus } from '../../types/Prescription';
 
 interface WorkflowStep {
   label: string;
+  description: string;
+  icon: React.ReactNode;
   isOutOfScope: boolean;
 }
 
@@ -14,18 +37,136 @@ interface WorkflowStepperProps {
 }
 
 const workflowSteps: WorkflowStep[] = [
-  { label: 'Demande RDV', isOutOfScope: false },
-  { label: 'Création patient', isOutOfScope: false },
-  { label: 'Planification RDV', isOutOfScope: false },
-  { label: 'Check-in', isOutOfScope: false },
-  { label: 'Pré-consultation', isOutOfScope: true }, // Step 5 - OUT OF SCOPE
-  { label: 'Consultation', isOutOfScope: false },
-  { label: 'Prescription', isOutOfScope: false },
-  { label: 'Prélèvement', isOutOfScope: true }, // Step 8 - OUT OF SCOPE
-  { label: 'Analyse labo', isOutOfScope: false },
-  { label: 'Interprétation résultats', isOutOfScope: false },
-  { label: 'Clôture', isOutOfScope: true }, // Step 11 - OUT OF SCOPE
+  { 
+    label: 'Demande RDV', 
+    description: 'Demande de rendez-vous',
+    icon: <EventAvailable />,
+    isOutOfScope: false 
+  },
+  { 
+    label: 'Création patient', 
+    description: 'Enregistrement du dossier',
+    icon: <Person />,
+    isOutOfScope: false 
+  },
+  { 
+    label: 'Planification RDV', 
+    description: 'Rendez-vous planifié',
+    icon: <Assignment />,
+    isOutOfScope: false 
+  },
+  { 
+    label: 'Check-in', 
+    description: 'Arrivée du patient',
+    icon: <CheckCircle />,
+    isOutOfScope: false 
+  },
+  { 
+    label: 'Pré-consultation', 
+    description: 'Préparation consultation',
+    icon: <Assignment />,
+    isOutOfScope: true 
+  },
+  { 
+    label: 'Consultation', 
+    description: 'Examen médical',
+    icon: <MedicalServices />,
+    isOutOfScope: false 
+  },
+  { 
+    label: 'Prescription', 
+    description: 'Ordonnance créée',
+    icon: <Science />,
+    isOutOfScope: false 
+  },
+  { 
+    label: 'Prélèvement', 
+    description: 'Échantillon prélevé',
+    icon: <Biotech />,
+    isOutOfScope: true 
+  },
+  { 
+    label: 'Analyse labo', 
+    description: 'Analyse en cours',
+    icon: <Science />,
+    isOutOfScope: false 
+  },
+  { 
+    label: 'Résultats', 
+    description: 'Résultats disponibles',
+    icon: <Assessment />,
+    isOutOfScope: false 
+  },
+  { 
+    label: 'Clôture', 
+    description: 'Parcours terminé',
+    icon: <TaskAlt />,
+    isOutOfScope: true 
+  },
 ];
+
+// Custom styled connector pour un rendu visuel amélioré
+const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
+  [`&.${stepConnectorClasses.alternativeLabel}`]: {
+    top: 22,
+  },
+  [`&.${stepConnectorClasses.active}`]: {
+    [`& .${stepConnectorClasses.line}`]: {
+      backgroundImage: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
+    },
+  },
+  [`&.${stepConnectorClasses.completed}`]: {
+    [`& .${stepConnectorClasses.line}`]: {
+      backgroundImage: `linear-gradient(90deg, ${theme.palette.success.main} 0%, ${theme.palette.success.light} 100%)`,
+    },
+  },
+  [`& .${stepConnectorClasses.line}`]: {
+    height: 3,
+    border: 0,
+    backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : '#eaeaf0',
+    borderRadius: 1,
+  },
+}));
+
+// Custom Step Icon avec icônes personnalisées
+interface ColorlibStepIconProps {
+  active: boolean;
+  completed: boolean;
+  icon: React.ReactNode;
+  isOutOfScope: boolean;
+}
+
+const ColorlibStepIconRoot = styled('div')<{
+  ownerState: { completed?: boolean; active?: boolean; isOutOfScope?: boolean };
+}>(({ theme, ownerState }) => ({
+  backgroundColor: ownerState.isOutOfScope 
+    ? theme.palette.grey[300]
+    : ownerState.completed
+    ? theme.palette.success.main
+    : ownerState.active
+    ? theme.palette.primary.main
+    : theme.palette.grey[300],
+  zIndex: 1,
+  color: '#fff',
+  width: 50,
+  height: 50,
+  display: 'flex',
+  borderRadius: '50%',
+  justifyContent: 'center',
+  alignItems: 'center',
+  opacity: ownerState.isOutOfScope ? 0.3 : 1,
+  boxShadow: ownerState.completed || ownerState.active ? '0 4px 10px 0 rgba(0,0,0,.25)' : 'none',
+}));
+
+function ColorlibStepIcon(props: ColorlibStepIconProps) {
+  const { active, completed, icon, isOutOfScope } = props;
+
+  return (
+    <ColorlibStepIconRoot ownerState={{ completed, active, isOutOfScope }}>
+      {icon}
+    </ColorlibStepIconRoot>
+  );
+}
 
 // Custom styled components for out-of-scope steps
 const OutOfScopeStepLabel = styled(StepLabel)(({ theme }) => ({
@@ -33,10 +174,6 @@ const OutOfScopeStepLabel = styled(StepLabel)(({ theme }) => ({
     opacity: 0.3,
     textDecoration: 'line-through',
     color: theme.palette.text.disabled,
-  },
-  '& .MuiStepIcon-root': {
-    opacity: 0.3,
-    color: theme.palette.action.disabled,
   },
 }));
 
@@ -124,26 +261,81 @@ export const WorkflowStepper = ({ appointments = [], prescriptions = [] }: Workf
   const activeStep = calculateActiveStep();
 
   return (
-    <Box sx={{ width: '100%', mb: 4 }}>
-      <Stepper activeStep={activeStep} alternativeLabel>
-        {workflowSteps.map((step, index) => (
-          <Step key={step.label} completed={isStepCompleted(index)}>
-            {step.isOutOfScope ? (
-              <OutOfScopeStepLabel>{step.label}</OutOfScopeStepLabel>
-            ) : (
-              <StepLabel
-                StepIconComponent={
-                  isStepCompleted(index)
-                    ? () => <CheckCircle color="primary" />
-                    : undefined
-                }
-              >
-                {step.label}
-              </StepLabel>
-            )}
-          </Step>
-        ))}
-      </Stepper>
-    </Box>
+    <Card elevation={2} sx={{ width: '100%', mb: 3 }}>
+      <CardContent>
+        <Typography variant="h6" gutterBottom sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>
+          Parcours Patient
+        </Typography>
+        
+        <Stepper 
+          activeStep={activeStep} 
+          alternativeLabel 
+          connector={<ColorlibConnector />}
+        >
+          {workflowSteps.map((step, index) => {
+            const isCompleted = isStepCompleted(index);
+            const isActive = index === activeStep;
+            
+            return (
+              <Step key={step.label} completed={isCompleted}>
+                {step.isOutOfScope ? (
+                  <OutOfScopeStepLabel
+                    StepIconComponent={() => (
+                      <ColorlibStepIcon
+                        active={false}
+                        completed={false}
+                        icon={step.icon}
+                        isOutOfScope={true}
+                      />
+                    )}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {step.label}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {step.description}
+                    </Typography>
+                  </OutOfScopeStepLabel>
+                ) : (
+                  <StepLabel
+                    StepIconComponent={() => (
+                      <ColorlibStepIcon
+                        active={isActive}
+                        completed={isCompleted}
+                        icon={step.icon}
+                        isOutOfScope={false}
+                      />
+                    )}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: isActive ? 600 : 500 }}>
+                      {step.label}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {step.description}
+                    </Typography>
+                    {isActive && (
+                      <Chip 
+                        label="En cours" 
+                        size="small" 
+                        color="primary" 
+                        sx={{ mt: 0.5, height: 20, fontSize: '0.7rem' }}
+                      />
+                    )}
+                    {isCompleted && !isActive && (
+                      <Chip 
+                        label="Terminé" 
+                        size="small" 
+                        color="success" 
+                        sx={{ mt: 0.5, height: 20, fontSize: '0.7rem' }}
+                      />
+                    )}
+                  </StepLabel>
+                )}
+              </Step>
+            );
+          })}
+        </Stepper>
+      </CardContent>
+    </Card>
   );
 };
