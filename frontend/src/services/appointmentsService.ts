@@ -63,6 +63,13 @@ export const appointmentsService = {
     return response.data.data;
   },
 
+  async requestVitals(id: string): Promise<Appointment> {
+    const response = await api.patch<ApiResponse<Appointment>>(
+      `/appointments/${id}/request-vitals`,
+    );
+    return response.data.data;
+  },
+
   async completeConsultation(
     id: string,
     consultationNotes: string,

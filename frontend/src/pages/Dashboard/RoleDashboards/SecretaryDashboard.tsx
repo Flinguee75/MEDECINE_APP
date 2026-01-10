@@ -25,7 +25,6 @@ import {
 } from '@mui/material';
 import Grid from '@mui/material/GridLegacy';
 import { 
-  PersonAdd, 
   People, 
   EventAvailable,
   CheckCircle,
@@ -276,23 +275,9 @@ export function SecretaryDashboard() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Header avec rôle, date et actions rapides */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
-        <Box>
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'primary.main', mb: 0.5 }}>
-            Secrétariat Médical
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {new Date().toLocaleDateString('fr-FR', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </Typography>
-        </Box>
-        
-        {/* Boutons d'action rapide - Déplacés en haut selon retour UX */}
+      {/* Header avec actions rapides */}
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
+        {/* Boutons d'action rapide */}
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <Button
             variant="outlined"
@@ -310,7 +295,7 @@ export function SecretaryDashboard() {
           </Button>
           <Button
             variant="contained"
-            startIcon={<PersonAdd />}
+            startIcon={<EventAvailable />}
             onClick={handleOpenCreate}
             sx={{ boxShadow: 2 }}
           >
@@ -423,12 +408,9 @@ export function SecretaryDashboard() {
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 Tous les patients sont enregistrés
               </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
+              <Typography variant="body2" color="text.secondary">
                 Aucun patient en attente de check-in pour le moment.
               </Typography>
-              <Button variant="outlined" onClick={handleOpenCreate}>
-                Créer un nouveau rendez-vous
-              </Button>
             </Box>
           ) : (
             <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
@@ -548,7 +530,7 @@ export function SecretaryDashboard() {
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
-                          Dr. {appointment.doctor?.name}
+                           {appointment.doctor?.name}
                         </Typography>
                       </TableCell>
                       <TableCell>

@@ -17,6 +17,11 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   IconButton,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from '@mui/material';
 import Grid from '@mui/material/GridLegacy';
 import { 
@@ -49,6 +54,8 @@ export function DoctorDashboard() {
   const [consultationsReady, setConsultationsReady] = useState<Appointment[]>([]);
   const [waitingResults, setWaitingResults] = useState<Appointment[]>([]);
   const [resultsToReview, setResultsToReview] = useState<Prescription[]>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingAppointment, setPendingAppointment] = useState<Appointment | null>(null);
 
   const loadData = async () => {
     try {
@@ -56,9 +63,14 @@ export function DoctorDashboard() {
       const appointments = await appointmentsService.getAll(user?.id);
       const prescriptions = await prescriptionsService.getAll({ doctorId: user?.id });
 
-      // Consultations prêtes = RDV avec constantes validées mais pas encore en consultation
+      // Consultations prêtes = constantes validées ou en attente de résultats
       setConsultationsReady(
-        appointments.filter((apt) => apt.status === AppointmentStatus.CHECKED_IN)
+        appointments.filter(
+          (apt) =>
+            apt.status === AppointmentStatus.CHECKED_IN ||
+            apt.status === AppointmentStatus.IN_CONSULTATION ||
+            apt.status === AppointmentStatus.WAITING_RESULTS
+        )
       );
 
       // En attente résultats = consultations terminées, prescriptions envoyées au labo
@@ -82,8 +94,13 @@ export function DoctorDashboard() {
     loadData();
   }, [user?.id]);
 
-  const handleStartConsultation = async (appointment: Appointment) => {
+  const startConsultation = async (appointment: Appointment) => {
     try {
+      if (appointment.status === AppointmentStatus.CHECKED_IN) {
+        await appointmentsService.update(appointment.id, {
+          status: AppointmentStatus.IN_CONSULTATION,
+        });
+      }
       showSuccess('Consultation démarrée');
       navigate(`/appointments/${appointment.id}/consult`);
     } catch (error) {
@@ -91,12 +108,46 @@ export function DoctorDashboard() {
     }
   };
 
+  const handleStartConsultation = async (appointment: Appointment) => {
+    if (appointment.status === AppointmentStatus.CHECKED_IN && !appointment.vitals) {
+      setPendingAppointment(appointment);
+      setConfirmOpen(true);
+      return;
+    }
+
+    await startConsultation(appointment);
+  };
+
   const handleReviewResult = (prescriptionId: string) => {
     navigate(`/prescriptions/${prescriptionId}/review`);
   };
 
   const handleViewPatient = (patientId: string) => {
-    navigate(`/patients/${patientId}`);
+    navigate(`/patients/${patientId}/medical-record`);
+  };
+
+  const handleConfirmStart = async () => {
+    if (!pendingAppointment) return;
+    setConfirmOpen(false);
+    await startConsultation(pendingAppointment);
+    setPendingAppointment(null);
+  };
+
+  const handleRequestVitals = () => {
+    if (!pendingAppointment) return;
+    setConfirmOpen(false);
+    appointmentsService
+      .requestVitals(pendingAppointment.id)
+      .then(() => {
+        showSuccess("Demande envoyée à l'infirmière pour la prise des constantes");
+        loadData();
+      })
+      .catch(() => {
+        showError("Erreur lors de l'envoi de la demande");
+      })
+      .finally(() => {
+        setPendingAppointment(null);
+      });
   };
 
   // Loading skeleton selon spécs UX - jamais de page blanche
@@ -126,17 +177,7 @@ export function DoctorDashboard() {
       {/* Header avec nom médecin, date et actions rapides */}
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'primary.main', mb: 0.5 }}>
-            {user?.name?.startsWith('Dr.') ? user.name : `Dr. ${user?.name}`}
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {new Date().toLocaleDateString('fr-FR', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </Typography>
+  
         </Box>
         
         {/* Boutons d'action rapide - Déplacés en haut */}
@@ -198,13 +239,7 @@ export function DoctorDashboard() {
                     Constantes validées
                   </Typography>
                 </Box>
-                <Badge 
-                  badgeContent={consultationsReady.length} 
-                  color="primary"
-                  sx={{ '& .MuiBadge-badge': { fontSize: '0.75rem' } }}
-                >
-                  <MedicalServices sx={{ fontSize: 40, color: 'primary.main', opacity: 0.7 }} />
-                </Badge>
+                <MedicalServices sx={{ fontSize: 40, color: 'primary.main', opacity: 0.7 }} />
               </Box>
             </CardContent>
           </Card>
@@ -260,22 +295,11 @@ export function DoctorDashboard() {
                     À réviser et interpréter
                   </Typography>
                 </Box>
-                <Badge 
-                  badgeContent={resultsToReview.length} 
-                  color="error"
-                  sx={{ 
-                    '& .MuiBadge-badge': { 
-                      fontSize: '0.75rem',
-                      display: resultsToReview.length > 0 ? 'block' : 'none'
-                    } 
-                  }}
-                >
-                  <Assessment sx={{ 
-                    fontSize: 40, 
-                    color: resultsToReview.length > 0 ? 'error.main' : 'text.secondary', 
-                    opacity: 0.7 
-                  }} />
-                </Badge>
+                <Assessment sx={{ 
+                  fontSize: 40, 
+                  color: resultsToReview.length > 0 ? 'error.main' : 'text.secondary', 
+                  opacity: 0.7 
+                }} />
               </Box>
             </CardContent>
           </Card>
@@ -328,14 +352,31 @@ export function DoctorDashboard() {
                           <Typography variant="h6" sx={{ fontWeight: 500 }}>
                             {appointment.patient?.firstName} {appointment.patient?.lastName}
                           </Typography>
-                          <WorkflowStatusChip status={appointment.status} />
-                          <Chip 
-                            icon={<CheckCircle />}
-                            label="Constantes validées" 
-                            color="success" 
-                            size="small"
-                            variant="outlined"
-                          />
+                          {!appointment.vitals ? (
+                            <Chip
+                              icon={<AccessTime />}
+                              label="En attente des constantes"
+                              color="warning"
+                              size="small"
+                              variant="outlined"
+                            />
+                          ) : appointment.status === AppointmentStatus.WAITING_RESULTS ? (
+                            <Chip
+                              icon={<Schedule />}
+                              label="En attente des résultats"
+                              color="info"
+                              size="small"
+                              variant="outlined"
+                            />
+                          ) : (
+                            <Chip
+                              icon={<CheckCircle />}
+                              label="Constantes validées"
+                              color="success"
+                              size="small"
+                              variant="outlined"
+                            />
+                          )}
                         </Box>
                       }
                       secondary={
@@ -373,7 +414,7 @@ export function DoctorDashboard() {
                             fontSize: '1rem'
                           }}
                         >
-                          Démarrer
+                          {appointment.status === AppointmentStatus.WAITING_RESULTS ? 'Continuer' : 'Démarrer'}
                         </Button>
                       </Box>
                     </ListItemSecondaryAction>
@@ -450,6 +491,25 @@ export function DoctorDashboard() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+        <DialogTitle>Constantes non validées</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Les constantes vitales ne sont pas encore validées. Voulez-vous démarrer
+            la consultation quand même ou envoyer une demande à l'infirmière ?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)}>Annuler</Button>
+          <Button variant="outlined" onClick={handleRequestVitals}>
+            Demander les constantes
+          </Button>
+          <Button variant="contained" color="warning" onClick={handleConfirmStart}>
+            Démarrer quand même
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

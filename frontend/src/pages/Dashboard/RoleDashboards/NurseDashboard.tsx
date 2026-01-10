@@ -44,6 +44,7 @@ export function NurseDashboard() {
   const [loading, setLoading] = useState(true);
   const [checkedInAppointments, setCheckedInAppointments] = useState<Appointment[]>([]);
   const [samplesToCollect, setSamplesToCollect] = useState<Prescription[]>([]);
+  const [vitalsRequests, setVitalsRequests] = useState<Appointment[]>([]);
 
   const loadData = async () => {
     try {
@@ -51,8 +52,20 @@ export function NurseDashboard() {
       const appointments = await appointmentsService.getAll();
       const prescriptions = await prescriptionsService.getAll();
 
-      setCheckedInAppointments(
-        appointments.filter((apt) => apt.status === AppointmentStatus.CHECKED_IN)
+      const checkedIn = appointments
+        .filter((apt) => apt.status === AppointmentStatus.CHECKED_IN)
+        .sort((a, b) => {
+          const aDate = new Date(a.date);
+          const bDate = new Date(b.date);
+          const aMinutes = aDate.getHours() * 60 + aDate.getMinutes();
+          const bMinutes = bDate.getHours() * 60 + bDate.getMinutes();
+          return aMinutes - bMinutes;
+        });
+      setCheckedInAppointments(checkedIn);
+      setVitalsRequests(
+        appointments.filter(
+          (apt) => apt.status === AppointmentStatus.CHECKED_IN && Boolean(apt.vitalsRequestedAt)
+        )
       );
 
       setSamplesToCollect(
@@ -86,11 +99,6 @@ export function NurseDashboard() {
     }
   };
 
-  // Tri chronologique par heure RDV selon spécs UX
-  const sortedAppointments = [...checkedInAppointments].sort((a, b) => 
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-
   // Loading skeleton selon spécs UX - jamais de page blanche
   if (loading) {
     return (
@@ -118,14 +126,7 @@ export function NurseDashboard() {
           <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'primary.main', mb: 0.5 }}>
             Soins Infirmiers
           </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {new Date().toLocaleDateString('fr-FR', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </Typography>
+           
         </Box>
         
         {/* Boutons d'action rapide - Déplacés en haut */}
@@ -147,11 +148,11 @@ export function NurseDashboard() {
           <Button
             variant="contained"
             startIcon={<MonitorHeart />}
-            onClick={() => sortedAppointments.length > 0 && handleEnterVitals(sortedAppointments[0].id)}
-            disabled={sortedAppointments.length === 0}
+            onClick={() => checkedInAppointments.length > 0 && handleEnterVitals(checkedInAppointments[0].id)}
+            disabled={checkedInAppointments.length === 0}
             sx={{ boxShadow: 2 }}
           >
-            {sortedAppointments.length > 0 ? 'Prochaines constantes' : 'Aucun patient'}
+            {checkedInAppointments.length > 0 ? 'Prochaines constantes' : 'Aucun patient'}
           </Button>
         </Box>
       </Box>
@@ -172,6 +173,25 @@ export function NurseDashboard() {
           }
         >
           {samplesToCollect.length} échantillon{samplesToCollect.length > 1 ? 's' : ''} à collecter pour le laboratoire
+        </Alert>
+      )}
+
+      {vitalsRequests.length > 0 && (
+        <Alert
+          severity="info"
+          sx={{ mb: 3 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={() => document.getElementById('patients-section')?.scrollIntoView()}
+            >
+              Voir
+            </Button>
+          }
+        >
+          {vitalsRequests.length} demande{vitalsRequests.length > 1 ? 's' : ''} de constantes
+          en attente
         </Alert>
       )}
 
@@ -271,7 +291,7 @@ export function NurseDashboard() {
             </Badge>
           </Box>
 
-          {sortedAppointments.length === 0 ? (
+          {checkedInAppointments.length === 0 ? (
             <Box textAlign="center" p={4}>
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 Tous les patients sont préparés
@@ -297,7 +317,7 @@ export function NurseDashboard() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {sortedAppointments.map((appointment) => (
+                  {checkedInAppointments.map((appointment) => (
                     <TableRow key={appointment.id} hover>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -322,7 +342,7 @@ export function NurseDashboard() {
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <LocalHospital sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
                           <Typography variant="body2">
-                            Dr. {appointment.doctor?.name}
+                            {appointment.doctor?.name}
                           </Typography>
                         </Box>
                       </TableCell>
@@ -405,7 +425,7 @@ export function NurseDashboard() {
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <LocalHospital sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
                           <Typography variant="body2">
-                            Dr. {prescription.doctor?.name}
+                            {prescription.doctor?.name}
                           </Typography>
                         </Box>
                       </TableCell>

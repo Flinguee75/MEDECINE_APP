@@ -57,7 +57,7 @@ export const Login = () => {
               gutterBottom
               sx={{ mb: 1 }}
             >
-              HÔPITAL MVP
+              Centre de Cardiologie EDLONA
             </Typography>
             <Typography
               variant="subtitle1"

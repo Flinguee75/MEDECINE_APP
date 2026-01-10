@@ -222,11 +222,40 @@ export class AppointmentsService {
     return this.prisma.appointment.update({
       where: { id },
       data: {
-        status: AppointmentStatus.IN_CONSULTATION,
         vitals: dto.vitals as any,
         medicalHistoryNotes: dto.medicalHistoryNotes,
+        vitalsRequestedAt: null,
+        vitalsRequestedBy: null,
         vitalsEnteredBy: userId,
         vitalsEnteredAt: new Date(),
+      },
+      include: {
+        patient: true,
+        doctor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
+  async requestVitals(id: string, userId: string) {
+    const appointment = await this.findOne(id);
+
+    if (appointment.status !== AppointmentStatus.CHECKED_IN) {
+      throw new BadRequestException(
+        'Impossible de demander les constantes : le rendez-vous doit être au statut CHECKED_IN',
+      );
+    }
+
+    return this.prisma.appointment.update({
+      where: { id },
+      data: {
+        vitalsRequestedAt: new Date(),
+        vitalsRequestedBy: userId,
       },
       include: {
         patient: true,

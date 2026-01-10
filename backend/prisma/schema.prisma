@@ -140,11 +140,13 @@ model Appointment {
 
   // Workflow timestamps
   checkedInAt     DateTime? // When patient was checked in
+  vitalsRequestedAt DateTime? // When doctor requested vitals
   vitalsEnteredAt DateTime? // When vitals were entered
   consultedAt     DateTime? // When consultation was completed
   closedAt        DateTime? // When appointment was closed
 
   // User tracking
+  vitalsRequestedBy String? // userId of doctor who requested vitals
   vitalsEnteredBy String? // userId of nurse who entered vitals
   consultedBy     String? // userId of doctor who consulted
   closedBy        String? // userId of secretary who closed

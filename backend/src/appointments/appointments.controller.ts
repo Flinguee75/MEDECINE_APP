@@ -120,6 +120,23 @@ export class AppointmentsController {
     };
   }
 
+  @Patch(':id/request-vitals')
+  @UseGuards(RolesGuard)
+  @Roles(Role.DOCTOR, Role.ADMIN)
+  async requestVitals(
+    @Param('id') id: string,
+    @CurrentUser() userId: string,
+  ) {
+    const appointment = await this.appointmentsService.requestVitals(
+      id,
+      userId,
+    );
+    return {
+      data: appointment,
+      message: 'Demande de constantes envoyée',
+    };
+  }
+
   @Patch(':id/consultation')
   @UseGuards(RolesGuard)
   @Roles(Role.DOCTOR, Role.ADMIN)

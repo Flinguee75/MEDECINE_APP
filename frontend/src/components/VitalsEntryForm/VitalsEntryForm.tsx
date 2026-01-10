@@ -303,7 +303,7 @@ export const VitalsEntryForm = ({
         )}
 
         <Grid container spacing={2}>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Poids (kg)"
@@ -315,7 +315,7 @@ export const VitalsEntryForm = ({
               }
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Taille (cm)"
@@ -327,7 +327,7 @@ export const VitalsEntryForm = ({
               }
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Température (°C)"
@@ -339,7 +339,7 @@ export const VitalsEntryForm = ({
               }
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Fréquence cardiaque (bpm)"
@@ -351,7 +351,7 @@ export const VitalsEntryForm = ({
               }
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Tension systolique (mmHg)"
@@ -369,7 +369,7 @@ export const VitalsEntryForm = ({
               }
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Tension diastolique (mmHg)"
@@ -387,7 +387,7 @@ export const VitalsEntryForm = ({
               }
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="SpO2 (%)"
@@ -399,7 +399,7 @@ export const VitalsEntryForm = ({
               }
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Fréquence respiratoire (/min)"
@@ -411,7 +411,7 @@ export const VitalsEntryForm = ({
               }
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               label="Douleur (EVA 0-10)"
@@ -423,7 +423,7 @@ export const VitalsEntryForm = ({
               }
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <TextField
               fullWidth
               select
@@ -437,7 +437,7 @@ export const VitalsEntryForm = ({
               <MenuItem value="COUCHE">Couché</MenuItem>
             </TextField>
           </Grid>
-          <Grid xs={12}>
+          <Grid item xs={12}>
             <TextField
               fullWidth
               label="Notes médicales contextuelles"

@@ -12,6 +12,7 @@ import {
   Query,
   Param,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -77,10 +78,23 @@ export class AuthController {
 
   @Get('users')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
-  async getUsers(@Query('role') role?: string, @Query('search') search?: string) {
+  @Roles(Role.ADMIN, Role.SECRETARY)
+  async getUsers(
+    @CurrentUser() userId: string,
+    @Query('role') role?: string,
+    @Query('search') search?: string,
+  ) {
     if (role && !Object.values(Role).includes(role as Role)) {
       throw new BadRequestException('Rôle invalide');
+    }
+
+    const currentUser = await this.authService.getUserById(userId);
+    if (!currentUser) {
+      throw new UnauthorizedException('Utilisateur non trouvé');
+    }
+
+    if (currentUser.role === Role.SECRETARY && role !== Role.DOCTOR) {
+      throw new BadRequestException('Accès limité aux médecins');
     }
 
     const users = await this.authService.getUsers(role as Role | undefined);

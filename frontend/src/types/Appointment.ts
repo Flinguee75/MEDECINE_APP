@@ -55,6 +55,8 @@ export interface Appointment {
   // Workflow tracking
   checkedInAt?: string;
   checkedInBy?: string;
+  vitalsRequestedAt?: string;
+  vitalsRequestedBy?: string;
   vitalsTakenAt?: string;
   vitalsTakenBy?: string;
   consultationNotes?: string;

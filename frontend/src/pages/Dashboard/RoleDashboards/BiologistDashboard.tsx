@@ -17,6 +17,7 @@ import { EmptyState } from '../../../components/EmptyState';
 export function BiologistDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [pendingRequests, setPendingRequests] = useState<Prescription[]>([]);
   const [samplesReceived, setSamplesReceived] = useState<Prescription[]>([]);
   const [inProgress, setInProgress] = useState<Prescription[]>([]);
 
@@ -24,6 +25,12 @@ export function BiologistDashboard() {
     try {
       setLoading(true);
       const prescriptions = await prescriptionsService.getAll();
+
+      setPendingRequests(
+        prescriptions.filter(
+          (p) => p.status === PrescriptionStatus.SENT_TO_LAB && !p.sampleCollectedAt
+        )
+      );
 
       setSamplesReceived(
         prescriptions.filter(
@@ -73,7 +80,15 @@ export function BiologistDashboard() {
       </Typography>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
+          <StatCard
+            title="Demandes reçues"
+            value={pendingRequests.length}
+            icon={<Science />}
+            color="#1976d2"
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
           <StatCard
             title="Échantillons reçus"
             value={samplesReceived.length}
@@ -81,7 +96,7 @@ export function BiologistDashboard() {
             color="#388e3c"
           />
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={4}>
           <StatCard
             title="Analyses en cours"
             value={inProgress.length}
@@ -90,6 +105,27 @@ export function BiologistDashboard() {
           />
         </Grid>
       </Grid>
+
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h6" gutterBottom>
+          Demandes reçues
+        </Typography>
+        {pendingRequests.length === 0 ? (
+          <EmptyState message="Aucune demande reçue" />
+        ) : (
+          pendingRequests.map((prescription) => (
+            <QuickActionCard
+              key={prescription.id}
+              title={`${prescription.patient?.firstName} ${prescription.patient?.lastName}`}
+              subtitle={`Prescription de Dr. ${prescription.doctor?.name}`}
+              status="En attente d'échantillon"
+              statusColor="warning"
+              actionLabel="Voir demande"
+              onAction={() => navigate('/prescriptions')}
+            />
+          ))
+        )}
+      </Box>
 
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" gutterBottom>

@@ -146,7 +146,7 @@ export const ConsultationEditor = ({
   };
 
   return (
-    <Box>
+    <Box sx={{ p: 2 }}>
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
@@ -195,6 +195,7 @@ export const ConsultationEditor = ({
         onChange={(e) => setNotes(e.target.value)}
         variant="outlined"
         sx={{
+          mt: 2,
           '& .MuiInputBase-root': {
             fontFamily: 'monospace',
             fontSize: '0.95rem',

@@ -74,6 +74,7 @@ export const AppointmentConsultationPage = () => {
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [holding, setHolding] = useState(false);
   const [error, setError] = useState('');
   const [tab, setTab] = useState(0);
 
@@ -94,11 +95,11 @@ export const AppointmentConsultationPage = () => {
   const [labUrgency, setLabUrgency] = useState<'STANDARD' | 'URGENT'>('STANDARD');
   const [labComment, setLabComment] = useState('');
   const [sendToLab, setSendToLab] = useState(true);
-  const [waitResults, setWaitResults] = useState(true);
   const [labRequests, setLabRequests] = useState<Prescription[]>([]);
   const [labLoading, setLabLoading] = useState(false);
   const [labError, setLabError] = useState('');
   const [labSuccess, setLabSuccess] = useState('');
+  const labDraftKey = useMemo(() => (id ? `lab-request-draft:${id}` : ''), [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -133,6 +134,37 @@ export const AppointmentConsultationPage = () => {
 
     fetchLabRequests();
   }, [id]);
+
+  useEffect(() => {
+    if (!labDraftKey) return;
+    const raw = window.localStorage.getItem(labDraftKey);
+    if (!raw) return;
+    try {
+      const draft = JSON.parse(raw) as {
+        labType?: string;
+        labUrgency?: 'STANDARD' | 'URGENT';
+        labComment?: string;
+        sendToLab?: boolean;
+      };
+      if (draft.labType !== undefined) setLabType(draft.labType);
+      if (draft.labUrgency !== undefined) setLabUrgency(draft.labUrgency);
+      if (draft.labComment !== undefined) setLabComment(draft.labComment);
+      if (draft.sendToLab !== undefined) setSendToLab(draft.sendToLab);
+    } catch {
+      window.localStorage.removeItem(labDraftKey);
+    }
+  }, [labDraftKey]);
+
+  useEffect(() => {
+    if (!labDraftKey) return;
+    const payload = JSON.stringify({
+      labType,
+      labUrgency,
+      labComment,
+      sendToLab,
+    });
+    window.localStorage.setItem(labDraftKey, payload);
+  }, [labDraftKey, labType, labUrgency, labComment, sendToLab]);
 
   const isConsultable =
     appointment?.status === AppointmentStatus.IN_CONSULTATION ||
@@ -224,6 +256,28 @@ export const AppointmentConsultationPage = () => {
     }
   };
 
+  const handleHoldForResults = async () => {
+    if (!appointment) return;
+    if (appointment.status !== AppointmentStatus.IN_CONSULTATION) {
+      setError('Le dossier doit être en consultation pour être mis en attente');
+      return;
+    }
+    try {
+      setHolding(true);
+      setError('');
+      await appointmentsService.update(appointment.id, {
+        status: AppointmentStatus.WAITING_RESULTS,
+      });
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message || 'Erreur lors de la mise en attente des résultats'
+      );
+    } finally {
+      setHolding(false);
+    }
+  };
+
   const handleCreateLabRequest = async () => {
     if (!appointment) return;
     if (!labType.trim()) {
@@ -254,19 +308,15 @@ export const AppointmentConsultationPage = () => {
         await prescriptionsService.sendToLab(created.id);
       }
 
-      if (waitResults && appointment.status === AppointmentStatus.IN_CONSULTATION) {
-        await appointmentsService.update(appointment.id, {
-          status: AppointmentStatus.WAITING_RESULTS,
-        });
-        const refreshed = await appointmentsService.getOne(appointment.id);
-        setAppointment(refreshed);
-      }
-
       const updated = await prescriptionsService.getAll({ appointmentId: appointment.id });
       setLabRequests(updated);
       setLabType('');
       setLabComment('');
       setLabUrgency('STANDARD');
+      setSendToLab(true);
+      if (labDraftKey) {
+        window.localStorage.removeItem(labDraftKey);
+      }
       setLabSuccess('Demande biologique créée');
     } catch (err: any) {
       setLabError(err.response?.data?.message || 'Erreur lors de la création de la demande');
@@ -307,13 +357,22 @@ export const AppointmentConsultationPage = () => {
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
           Consultation Medecin
         </Typography>
-        <Button
-          variant="contained"
-          onClick={handleCompleteConsultation}
-          disabled={!isConsultable || saving}
-        >
-          {saving ? 'Enregistrement...' : 'Terminer la consultation'}
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            onClick={handleHoldForResults}
+            disabled={appointment.status !== AppointmentStatus.IN_CONSULTATION || holding}
+          >
+            {holding ? 'Mise en attente...' : 'Mettre en attente de résultats'}
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleCompleteConsultation}
+            disabled={!isConsultable || saving}
+          >
+            {saving ? 'Enregistrement...' : 'Terminer la consultation'}
+          </Button>
+        </Box>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -326,7 +385,7 @@ export const AppointmentConsultationPage = () => {
       <Card sx={{ mb: 3, border: '1px solid rgba(25, 118, 210, 0.15)', bgcolor: 'rgba(25, 118, 210, 0.04)' }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
-            <Grid xs={12} md={8}>
+            <Grid item xs={12} md={8}>
               <Typography variant="subtitle2" color="text.secondary">
                 Patient
               </Typography>
@@ -350,7 +409,7 @@ export const AppointmentConsultationPage = () => {
                 )}
               </Box>
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid item xs={12} md={4}>
               <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                 Constantes recentes
               </Typography>
@@ -422,7 +481,7 @@ export const AppointmentConsultationPage = () => {
 
           <TabPanel value={tab} index={0}>
             <Grid container spacing={2}>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Nom complet"
@@ -430,7 +489,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid xs={12} md={3}>
+              <Grid item xs={12} md={3}>
                 <TextField
                   fullWidth
                   label="Age"
@@ -438,7 +497,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid xs={12} md={3}>
+              <Grid item xs={12} md={3}>
                 <TextField
                   fullWidth
                   label="Sexe"
@@ -446,7 +505,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid xs={12}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Motif"
@@ -454,7 +513,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid xs={12}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Notes infirmier (contexte)"
@@ -469,7 +528,7 @@ export const AppointmentConsultationPage = () => {
 
           <TabPanel value={tab} index={1}>
             <Grid container spacing={2}>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Allergies"
@@ -477,7 +536,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Maladies chroniques"
@@ -485,7 +544,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Traitements en cours"
@@ -493,7 +552,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Antecedents familiaux"
@@ -501,7 +560,7 @@ export const AppointmentConsultationPage = () => {
                   InputProps={{ readOnly: true }}
                 />
               </Grid>
-              <Grid xs={12}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Notes"
@@ -562,7 +621,7 @@ export const AppointmentConsultationPage = () => {
             {labError && <Alert severity="error" sx={{ mb: 2 }}>{labError}</Alert>}
             {labSuccess && <Alert severity="success" sx={{ mb: 2 }}>{labSuccess}</Alert>}
             <Grid container spacing={2}>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   label="Type d'analyse"
@@ -571,7 +630,7 @@ export const AppointmentConsultationPage = () => {
                   onChange={(e) => setLabType(e.target.value)}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   select
@@ -583,7 +642,7 @@ export const AppointmentConsultationPage = () => {
                   <MenuItem value="URGENT">Urgente</MenuItem>
                 </TextField>
               </Grid>
-              <Grid xs={12}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="Commentaire clinique"
@@ -593,25 +652,13 @@ export const AppointmentConsultationPage = () => {
                   minRows={3}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   select
                   label="Envoyer au labo"
                   value={sendToLab ? 'YES' : 'NO'}
                   onChange={(e) => setSendToLab(e.target.value === 'YES')}
-                >
-                  <MenuItem value="YES">Oui</MenuItem>
-                  <MenuItem value="NO">Non</MenuItem>
-                </TextField>
-              </Grid>
-              <Grid xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Mettre en attente de resultats"
-                  value={waitResults ? 'YES' : 'NO'}
-                  onChange={(e) => setWaitResults(e.target.value === 'YES')}
                 >
                   <MenuItem value="YES">Oui</MenuItem>
                   <MenuItem value="NO">Non</MenuItem>
