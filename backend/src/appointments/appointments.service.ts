@@ -65,12 +65,17 @@ export class AppointmentsService {
     doctorId?: string,
     patientId?: string,
     status?: AppointmentStatus,
+    statuses?: AppointmentStatus[],
   ) {
     const where: any = {};
 
     if (doctorId) where.doctorId = doctorId;
     if (patientId) where.patientId = patientId;
-    if (status) where.status = status;
+    if (statuses && statuses.length > 0) {
+      where.status = { in: statuses };
+    } else if (status) {
+      where.status = status;
+    }
 
     return this.prisma.appointment.findMany({
       where,

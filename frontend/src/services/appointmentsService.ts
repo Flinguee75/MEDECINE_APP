@@ -18,11 +18,16 @@ export const appointmentsService = {
     doctorId?: string,
     patientId?: string,
     status?: AppointmentStatus,
+    statuses?: AppointmentStatus[],
   ): Promise<Appointment[]> {
     const params: any = {};
     if (doctorId) params.doctorId = doctorId;
     if (patientId) params.patientId = patientId;
-    if (status) params.status = status;
+    if (statuses && statuses.length > 0) {
+      params.statuses = statuses.join(',');
+    } else if (status) {
+      params.status = status;
+    }
 
     const response = await api.get<ApiResponse<Appointment[]>>('/appointments', { params });
     return response.data.data;

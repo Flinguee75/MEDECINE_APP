@@ -60,7 +60,16 @@ export function DoctorDashboard() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const appointments = await appointmentsService.getAll(user?.id);
+      const appointments = await appointmentsService.getAll(
+        user?.id,
+        undefined,
+        undefined,
+        [
+          AppointmentStatus.CHECKED_IN,
+          AppointmentStatus.IN_CONSULTATION,
+          AppointmentStatus.WAITING_RESULTS,
+        ],
+      );
       const prescriptions = await prescriptionsService.getAll({ doctorId: user?.id });
 
       // Consultations prêtes = constantes validées ou en attente de résultats

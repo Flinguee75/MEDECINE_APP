@@ -45,11 +45,19 @@ export class AppointmentsController {
     @Query('doctorId') doctorId?: string,
     @Query('patientId') patientId?: string,
     @Query('status') status?: AppointmentStatus,
+    @Query('statuses') statuses?: string,
   ) {
+    const statusList = statuses
+      ? (statuses
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean) as AppointmentStatus[])
+      : undefined;
     const appointments = await this.appointmentsService.findAll(
       doctorId,
       patientId,
       status,
+      statusList,
     );
     return {
       data: appointments,
