@@ -10,6 +10,7 @@ import { Science, Biotech } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { prescriptionsService } from '../../../services/prescriptionsService';
 import { Prescription, PrescriptionStatus } from '../../../types/Prescription';
+import { AppointmentStatus } from '../../../types/Appointment';
 import { StatCard } from '../../../components/StatCard';
 import { QuickActionCard } from '../../../components/QuickActionCard';
 import { EmptyState } from '../../../components/EmptyState';
@@ -25,21 +26,24 @@ export function BiologistDashboard() {
     try {
       setLoading(true);
       const prescriptions = await prescriptionsService.getAll();
+      const activePrescriptions = prescriptions.filter(
+        (p) => p.appointment?.status !== AppointmentStatus.CANCELLED
+      );
 
       setPendingRequests(
-        prescriptions.filter(
+        activePrescriptions.filter(
           (p) => p.status === PrescriptionStatus.SENT_TO_LAB && !p.sampleCollectedAt
         )
       );
 
       setSamplesReceived(
-        prescriptions.filter(
+        activePrescriptions.filter(
           (p) => p.status === PrescriptionStatus.SENT_TO_LAB && p.sampleCollectedAt
         )
       );
 
       setInProgress(
-        prescriptions.filter((p) => p.status === PrescriptionStatus.IN_PROGRESS)
+        activePrescriptions.filter((p) => p.status === PrescriptionStatus.IN_PROGRESS)
       );
     } catch (error) {
       console.error('Failed to load data:', error);

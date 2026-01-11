@@ -65,6 +65,9 @@ export class PrescriptionsService {
         doctor: {
           select: { id: true, name: true, email: true },
         },
+        appointment: {
+          select: { id: true, status: true },
+        },
         result: true,
       },
       orderBy: { createdAt: 'desc' },
@@ -78,6 +81,9 @@ export class PrescriptionsService {
         patient: true,
         doctor: {
           select: { id: true, name: true, email: true },
+        },
+        appointment: {
+          select: { id: true, status: true },
         },
         result: true,
       },

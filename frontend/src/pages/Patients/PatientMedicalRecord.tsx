@@ -62,19 +62,35 @@ export function PatientMedicalRecord() {
 
   const canEdit = user?.role === Role.DOCTOR || user?.role === Role.ADMIN;
   const canAddDoc = user?.role === Role.SECRETARY || user?.role === Role.DOCTOR || user?.role === Role.ADMIN;
-  const canEditVitals = user?.role === Role.DOCTOR || user?.role === Role.BIOLOGIST;
+  const canEditVitals =
+    user?.role === Role.NURSE ||
+    user?.role === Role.DOCTOR ||
+    user?.role === Role.ADMIN;
+
+  const sortedAppointments = [...(patient?.appointments || [])].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
+  const activeAppointment =
+    sortedAppointments.find(
+      (apt) =>
+        apt.status !== AppointmentStatus.COMPLETED &&
+        apt.status !== AppointmentStatus.CANCELLED,
+    ) ?? sortedAppointments[0];
+  const activePrescriptions = activeAppointment
+    ? (patient?.prescriptions || []).filter(
+        (presc) => presc.appointmentId === activeAppointment.id,
+      )
+    : [];
 
   // Calcul des badges pour les onglets selon spécs UX
   const tabsBadges = {
-    pendingVitals: patient?.appointments?.filter(apt => 
-      apt.status !== AppointmentStatus.CANCELLED && !apt.vitals
-    ).length || 0,
-    activePrescriptions: patient?.prescriptions?.filter(presc => 
+    pendingVitals: activeAppointment && !activeAppointment.vitals ? 1 : 0,
+    activePrescriptions: activePrescriptions.filter(presc => 
       presc.status === PrescriptionStatus.CREATED || 
       presc.status === PrescriptionStatus.SENT_TO_LAB ||
       presc.status === PrescriptionStatus.IN_PROGRESS
     ).length || 0,
-    newResults: patient?.prescriptions?.filter(presc => 
+    newResults: activePrescriptions.filter(presc => 
       presc.status === PrescriptionStatus.RESULTS_AVAILABLE
     ).length || 0,
     unreadNotes: 0 // À implémenter selon vos besoins
@@ -130,7 +146,11 @@ export function PatientMedicalRecord() {
   const handleSaveVitals = async (vitals: Vitals) => {
     if (!selectedAppointment) return;
     try {
-      await appointmentsService.update(selectedAppointment.id, { vitals });
+      if (user?.role === Role.NURSE || user?.role === Role.ADMIN) {
+        await appointmentsService.enterVitals(selectedAppointment.id, { vitals });
+      } else {
+        await appointmentsService.update(selectedAppointment.id, { vitals });
+      }
       setOpenVitalsDialog(false);
       loadPatient();
     } catch (err: any) {
@@ -316,40 +336,38 @@ export function PatientMedicalRecord() {
                   )}
                 </Box>
 
-                {patient.appointments && patient.appointments.length > 0 ? (
+                {activeAppointment ? (
                   <List>
-                    {patient.appointments
-                      .filter(apt => apt.status !== AppointmentStatus.CANCELLED)
-                      .map((apt) => (
-                        <ListItem key={apt.id}>
-                          <ListItemText
-                            primary={`${new Date(apt.date).toLocaleDateString()} - ${apt.motif}`}
-                            secondary={
-                              <Box sx={{ mt: 1 }}>
-                                <WorkflowStatusChip status={apt.status} />
-                                {apt.vitals && (
-                                  <Box sx={{ mt: 1, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                                    <Typography variant="caption">Poids: {apt.vitals.weight}kg</Typography>
-                                    <Typography variant="caption">Taille: {apt.vitals.height}cm</Typography>
-                                    <Typography variant="caption">Tension: {apt.vitals.bloodPressure}</Typography>
-                                    <Typography variant="caption">Pouls: {apt.vitals.heartRate}bpm</Typography>
-                                    <Typography variant="caption">Temp: {apt.vitals.temperature}°C</Typography>
-                                  </Box>
-                                )}
-                              </Box>
-                            }
-                          />
-                          {canEditVitals && (
-                            <Button
-                              size="small"
-                              variant={apt.vitals ? "outlined" : "contained"}
-                              onClick={() => handleOpenVitals(apt)}
-                            >
-                              {apt.vitals ? 'Modifier' : 'Saisir'}
-                            </Button>
-                          )}
-                        </ListItem>
-                      ))}
+                      <ListItem>
+                        <ListItemText
+                          primary={`${new Date(activeAppointment.date).toLocaleDateString()} - ${activeAppointment.motif}`}
+                          secondary={
+                            <Box sx={{ mt: 1 }}>
+                              <WorkflowStatusChip status={activeAppointment.status} />
+                              {activeAppointment.vitals && (
+                                <Box sx={{ mt: 1, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                                  <Typography variant="caption">Poids: {activeAppointment.vitals.weight}kg</Typography>
+                                  <Typography variant="caption">Taille: {activeAppointment.vitals.height}cm</Typography>
+                                  <Typography variant="caption">
+                                    Tension: {activeAppointment.vitals.bloodPressure?.systolic ?? '-'} / {activeAppointment.vitals.bloodPressure?.diastolic ?? '-'} mmHg
+                                  </Typography>
+                                  <Typography variant="caption">Pouls: {activeAppointment.vitals.heartRate}bpm</Typography>
+                                  <Typography variant="caption">Temp: {activeAppointment.vitals.temperature}°C</Typography>
+                                </Box>
+                              )}
+                            </Box>
+                          }
+                        />
+                        {canEditVitals && (
+                          <Button
+                            size="small"
+                            variant={activeAppointment.vitals ? "outlined" : "contained"}
+                            onClick={() => handleOpenVitals(activeAppointment)}
+                          >
+                            {activeAppointment.vitals ? 'Modifier' : 'Saisir'}
+                          </Button>
+                        )}
+                      </ListItem>
                   </List>
                 ) : (
                   <Typography variant="body2" color="text.secondary">Aucune consultation</Typography>
@@ -374,9 +392,9 @@ export function PatientMedicalRecord() {
                   )}
                 </Box>
 
-                {patient.prescriptions && patient.prescriptions.length > 0 ? (
+                {activePrescriptions.length > 0 ? (
                   <List>
-                    {patient.prescriptions.map((prescription) => (
+                    {activePrescriptions.map((prescription) => (
                       <ListItem key={prescription.id}>
                         <ListItemText
                           primary={prescription.text.substring(0, 100) + (prescription.text.length > 100 ? '...' : '')}
@@ -415,10 +433,9 @@ export function PatientMedicalRecord() {
                   )}
                 </Box>
 
-                {patient.prescriptions?.filter(p => p.status === PrescriptionStatus.RESULTS_AVAILABLE) && 
-                 patient.prescriptions.filter(p => p.status === PrescriptionStatus.RESULTS_AVAILABLE).length > 0 ? (
+                {activePrescriptions.filter(p => p.status === PrescriptionStatus.RESULTS_AVAILABLE).length > 0 ? (
                   <List>
-                    {patient.prescriptions
+                    {activePrescriptions
                       .filter(p => p.status === PrescriptionStatus.RESULTS_AVAILABLE)
                       .map((prescription) => (
                         <ListItem key={prescription.id}>

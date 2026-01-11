@@ -1,5 +1,6 @@
 import { Patient } from './Patient';
 import type { BiologicalData } from './Result';
+import { AppointmentStatus } from './Appointment';
 
 export enum PrescriptionStatus {
   CREATED = 'CREATED',
@@ -26,6 +27,10 @@ export interface Prescription {
 
   patientId: string;
   appointmentId?: string;
+  appointment?: {
+    id: string;
+    status: AppointmentStatus;
+  };
   doctorId: string;
   nurseId?: string;
   patient?: Patient;

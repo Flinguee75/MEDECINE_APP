@@ -29,6 +29,7 @@ interface WorkflowStep {
   description: string;
   icon: React.ReactNode;
   isOutOfScope: boolean;
+  isOptional?: boolean;
 }
 
 interface WorkflowStepperProps {
@@ -65,7 +66,7 @@ const workflowSteps: WorkflowStep[] = [
     label: 'Pré-consultation', 
     description: 'Préparation consultation',
     icon: <Assignment />,
-    isOutOfScope: true 
+    isOutOfScope: false 
   },
   { 
     label: 'Consultation', 
@@ -83,13 +84,15 @@ const workflowSteps: WorkflowStep[] = [
     label: 'Prélèvement', 
     description: 'Échantillon prélevé',
     icon: <Biotech />,
-    isOutOfScope: true 
+    isOutOfScope: false,
+    isOptional: true
   },
   { 
     label: 'Analyse labo', 
     description: 'Analyse en cours',
     icon: <Science />,
-    isOutOfScope: false 
+    isOutOfScope: false,
+    isOptional: true
   },
   { 
     label: 'Résultats', 
@@ -101,7 +104,8 @@ const workflowSteps: WorkflowStep[] = [
     label: 'Clôture', 
     description: 'Parcours terminé',
     icon: <TaskAlt />,
-    isOutOfScope: true 
+    isOutOfScope: false,
+    isOptional: true
   },
 ];
 
@@ -178,52 +182,96 @@ const OutOfScopeStepLabel = styled(StepLabel)(({ theme }) => ({
 }));
 
 export const WorkflowStepper = ({ appointments = [], prescriptions = [] }: WorkflowStepperProps) => {
+  const sortedAppointments = [...appointments].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
+  const activeAppointment =
+    sortedAppointments.find(
+      (apt) =>
+        apt.status !== AppointmentStatus.COMPLETED &&
+        apt.status !== AppointmentStatus.CANCELLED,
+    ) ?? sortedAppointments[0];
+  const activePrescriptions = activeAppointment
+    ? prescriptions.filter((presc) => presc.appointmentId === activeAppointment.id)
+    : [];
+  const hasLabOrder = activePrescriptions.some((presc) =>
+    [
+      PrescriptionStatus.SENT_TO_LAB,
+      PrescriptionStatus.SAMPLE_COLLECTED,
+      PrescriptionStatus.IN_PROGRESS,
+      PrescriptionStatus.RESULTS_AVAILABLE,
+      PrescriptionStatus.COMPLETED,
+    ].includes(presc.status),
+  );
+  const hasSampleCollected = activePrescriptions.some((presc) =>
+    [
+      PrescriptionStatus.SAMPLE_COLLECTED,
+      PrescriptionStatus.IN_PROGRESS,
+      PrescriptionStatus.RESULTS_AVAILABLE,
+      PrescriptionStatus.COMPLETED,
+    ].includes(presc.status),
+  );
+  const hasAnalysisInProgress = activePrescriptions.some(
+    (presc) => presc.status === PrescriptionStatus.IN_PROGRESS,
+  );
+  const hasAnalysisCompleted = activePrescriptions.some((presc) =>
+    [PrescriptionStatus.RESULTS_AVAILABLE, PrescriptionStatus.COMPLETED].includes(
+      presc.status,
+    ),
+  );
+  const hasClosure = activeAppointment?.status === AppointmentStatus.COMPLETED;
+
   // Calculate current step based on patient data
   const calculateActiveStep = (): number => {
     // Step 0: Demande RDV - Always completed (patient exists)
     // Step 1: Création patient - Always completed (patient record exists)
 
     // Step 2: Planification RDV - Completed if patient has any appointment
-    if (!appointments || appointments.length === 0) {
+    if (!activeAppointment) {
       return 2;
     }
 
     // Step 3: Check-in - Completed if any appointment has status >= CHECKED_IN
-    const hasCheckedIn = appointments.some((apt) =>
-      [
-        AppointmentStatus.CHECKED_IN,
-        AppointmentStatus.IN_CONSULTATION,
-        AppointmentStatus.WAITING_RESULTS,
-        AppointmentStatus.CONSULTATION_COMPLETED,
-        AppointmentStatus.COMPLETED,
-      ].includes(apt.status)
-    );
+    const hasCheckedIn = [
+      AppointmentStatus.CHECKED_IN,
+      AppointmentStatus.IN_CONSULTATION,
+      AppointmentStatus.WAITING_RESULTS,
+      AppointmentStatus.CONSULTATION_COMPLETED,
+      AppointmentStatus.COMPLETED,
+    ].includes(activeAppointment.status);
     if (!hasCheckedIn) {
       return 3;
     }
 
-    // Step 4: Pré-consultation - OUT OF SCOPE (always skip)
-    // Step 5: Consultation - Completed if any appointment has status >= IN_CONSULTATION
-    const hasConsultation = appointments.some((apt) =>
-      [
-        AppointmentStatus.IN_CONSULTATION,
-        AppointmentStatus.WAITING_RESULTS,
-        AppointmentStatus.CONSULTATION_COMPLETED,
-        AppointmentStatus.COMPLETED,
-      ].includes(apt.status)
+    // Step 4: Pré-consultation - Completed when vitals are entered
+    const hasVitals = Boolean(
+      activeAppointment.vitals ||
+        activeAppointment.vitalsEnteredAt ||
+        activeAppointment.vitalsTakenAt,
     );
+    if (!hasVitals) {
+      return 4;
+    }
+
+    // Step 5: Consultation - Completed if appointment has status >= IN_CONSULTATION
+    const hasConsultation = [
+      AppointmentStatus.IN_CONSULTATION,
+      AppointmentStatus.WAITING_RESULTS,
+      AppointmentStatus.CONSULTATION_COMPLETED,
+      AppointmentStatus.COMPLETED,
+    ].includes(activeAppointment.status);
     if (!hasConsultation) {
       return 5; // Current step is Consultation (index 5)
     }
 
     // Step 6: Prescription - Completed if patient has any prescription
-    if (!prescriptions || prescriptions.length === 0) {
+    if (!activePrescriptions || activePrescriptions.length === 0) {
       return 6;
     }
 
     // Step 7: Prélèvement - OUT OF SCOPE (always skip)
     // Step 8: Analyse labo - Completed if any prescription has status >= IN_PROGRESS
-    const hasLabAnalysis = prescriptions.some((presc) =>
+    const hasLabAnalysis = activePrescriptions.some((presc) =>
       [
         PrescriptionStatus.IN_PROGRESS,
         PrescriptionStatus.RESULTS_AVAILABLE,
@@ -235,7 +283,12 @@ export const WorkflowStepper = ({ appointments = [], prescriptions = [] }: Workf
     }
 
     // Step 9: Interprétation résultats - Completed if any prescription has result
-    const hasResults = prescriptions.some((presc) => presc.result);
+    const hasResults = activePrescriptions.some(
+      (presc) =>
+        presc.result ||
+        presc.status === PrescriptionStatus.RESULTS_AVAILABLE ||
+        presc.status === PrescriptionStatus.COMPLETED,
+    );
     if (!hasResults) {
       return 9;
     }
@@ -252,6 +305,12 @@ export const WorkflowStepper = ({ appointments = [], prescriptions = [] }: Workf
     // Out-of-scope steps are never completed (they're skipped)
     if (workflowSteps[stepIndex].isOutOfScope) {
       return false;
+    }
+
+    if (workflowSteps[stepIndex].isOptional) {
+      if (stepIndex === 7) return hasSampleCollected;
+      if (stepIndex === 8) return hasAnalysisCompleted;
+      if (stepIndex === 10) return Boolean(hasClosure);
     }
 
     // All steps before the active step are completed
@@ -274,10 +333,15 @@ export const WorkflowStepper = ({ appointments = [], prescriptions = [] }: Workf
         >
           {workflowSteps.map((step, index) => {
             const isCompleted = isStepCompleted(index);
-            const isActive = index === activeStep;
+            let isActive = index === activeStep;
+            if (step.isOptional) {
+              if (index === 7) isActive = hasLabOrder && !hasSampleCollected;
+              if (index === 8) isActive = hasAnalysisInProgress;
+              if (index === 10) isActive = false;
+            }
             
             return (
-              <Step key={step.label} completed={isCompleted}>
+              <Step key={step.label} completed={isCompleted} active={isActive}>
                 {step.isOutOfScope ? (
                   <OutOfScopeStepLabel
                     StepIconComponent={() => (
