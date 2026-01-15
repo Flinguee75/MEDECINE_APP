@@ -77,7 +77,6 @@ Le schéma complet est disponible dans le fichier `schema.prisma`.
 - PostgreSQL version 14 ou supérieure  
 
 ### Installation
-Un guide détaillé est disponible dans le fichier `INSTALL.md`.
 
 ```bash
 npm run install:all
