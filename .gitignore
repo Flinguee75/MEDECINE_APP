@@ -13,11 +13,24 @@ frontend/.env
 backend/dist/
 frontend/dist/
 frontend/out/
-.github
-.specify
-_bmad
-_bmad-output
-claude-sub-agent
+
+# Framework and temporary files
+.github/
+.specify/
+_bmad/
+_bmad-output/
+claude-sub-agent/
+pdf/generated/
+docs/build/
+docs/
+
+# Claude Code configuration (keep only essential)
+.claude/commands/bmad/
+.claude/settings.local.json
+.mcp.json
+
+# Duplicated files
+schema.prisma
 
 # Database
 backend/prisma/migrations/

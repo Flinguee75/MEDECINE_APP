@@ -8,11 +8,11 @@ Ce document décrit l'organisation complète des dossiers et fichiers du projet 
 hospital-mvp/
 ├── backend/                    # Serveur NestJS + API REST
 ├── frontend/                   # Application Electron + React
-├── docs/                       # Documentation du projet
 ├── .gitignore                  # Fichiers à ignorer par Git
 ├── README.md                   # Documentation principale
 ├── ARCHITECTURE.md             # Architecture technique
 ├── API.md                      # Spécification de l'API
+├── WIREFRAMES.md               # Maquettes et interfaces
 ├── STRUCTURE.md                # Ce fichier
 ├── INSTALL.md                  # Guide d'installation
 └── package.json                # Scripts racine du monorepo
@@ -252,21 +252,6 @@ Fournit à toute l'application :
 Configure la fenêtre Electron :
 - Taille : 1280x800
 - Charge l'application React (via Vite en dev, build en prod)
-
----
-
-## 📁 Dossier docs/
-
-```
-docs/
-├── wireframes/                 # Maquettes des interfaces
-│   ├── login.png
-│   ├── doctor-dashboard.png
-│   ├── secretary-dashboard.png
-│   └── biologist-dashboard.png
-│
-└── screenshots/                # Captures d'écran de la démo finale
-```
 
 ---
 

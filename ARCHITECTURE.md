@@ -82,9 +82,12 @@ medecine-app/
 │   ├── package.json
 │   └── tsconfig.json
 │
-├── docs/                       # Documentation supplémentaire
 ├── README.md                   # Documentation principale
+├── ARCHITECTURE.md             # Architecture technique
+├── API.md                      # Spécification de l'API
+├── WIREFRAMES.md               # Maquettes et interfaces
 ├── INSTALL.md                  # Guide d'installation
+├── STRUCTURE.md                # Structure détaillée
 ├── package.json                # Scripts racine du monorepo
 └── .gitignore
 ```
