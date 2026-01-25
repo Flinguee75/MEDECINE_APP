@@ -19,7 +19,7 @@ import {
   Typography,
 } from '@mui/material';
 import Grid from '@mui/material/GridLegacy';
-import { ExpandMore, Save, Check } from '@mui/icons-material';
+import { ExpandMore, Save, Check, AutoAwesome } from '@mui/icons-material';
 import { Vitals } from '../../types/Appointment';
 import { vitalHistoryService, VitalHistory } from '../../services/vitalHistoryService';
 import { appointmentsService } from '../../services/appointmentsService';
@@ -238,6 +238,26 @@ export const VitalsEntryForm = ({
     setSuccess('Constantes chargées depuis l\'historique');
   };
 
+  const handleFillDefaults = () => {
+    setVitals({
+      weight: 70,
+      height: 170,
+      bloodPressure: {
+        systolic: 120,
+        diastolic: 80,
+      },
+      temperature: 37.0,
+      heartRate: 75,
+      respiratoryRate: 16,
+      oxygenSaturation: 98,
+      painScore: 0,
+      bloodPressurePosition: 'ASSIS',
+      bloodPressureArm: '',
+    });
+    setMedicalHistoryNotes('Patient en bon état général. Aucune plainte particulière. Constantes dans les normes.');
+    setSuccess('Valeurs par défaut chargées');
+  };
+
   const formatVitals = (v: Vitals) => {
     const parts: string[] = [];
     if (v.bloodPressure?.systolic && v.bloodPressure?.diastolic) {
@@ -276,6 +296,14 @@ export const VitalsEntryForm = ({
             Saisie des constantes vitales
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              color="secondary"
+              startIcon={<AutoAwesome />}
+              onClick={handleFillDefaults}
+            >
+              Valeurs par défaut
+            </Button>
             <Button
               variant="outlined"
               startIcon={<Save />}

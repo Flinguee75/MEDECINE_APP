@@ -184,6 +184,60 @@ export const PatientsList = () => {
     }
   };
 
+  const generateRandomPatient = (): CreatePatientData => {
+    const firstNames = ['Kouassi', 'Aya', 'Koffi', 'Adjoua', 'Yao', 'Akissi', 'N\'Guessan', 'Amenan', 'Kouame', 'Affoue', 'Brou', 'Mariam', 'Konan', 'Fatou', 'Yapi'];
+    const lastNames = ['Kouassi', 'Kone', 'Toure', 'Yao', 'Bamba', 'Diallo', 'Ouattara', 'Coulibaly', 'Traore', 'N\'Guessan', 'Kouame', 'Konan', 'Brou', 'Yapi', 'Sanogo'];
+    const streets = ['Boulevard de la République', 'Avenue Houphouët-Boigny', 'Rue du Commerce', 'Avenue Marchand', 'Boulevard Latrille', 'Rue Pierre et Marie Curie', 'Avenue Nogues'];
+    const cities = ['Abidjan', 'Bouaké', 'Daloa', 'Yamoussoukro', 'San-Pédro', 'Korhogo', 'Man', 'Gagnoa'];
+    const insurances = ['MUGEF-CI', 'CNPS', 'Allianz Côte d\'Ivoire', 'AXA Assurances CI', 'NSIA Assurances'];
+    
+    const randomFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const randomLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    const randomStreet = streets[Math.floor(Math.random() * streets.length)];
+    const randomCity = cities[Math.floor(Math.random() * cities.length)];
+    const randomInsurance = insurances[Math.floor(Math.random() * insurances.length)];
+    const randomSex = Math.random() > 0.5 ? 'M' : 'F';
+    
+    // Générer une date de naissance aléatoire (entre 18 et 80 ans)
+    const today = new Date();
+    const minAge = 18;
+    const maxAge = 80;
+    const age = Math.floor(Math.random() * (maxAge - minAge + 1)) + minAge;
+    const birthYear = today.getFullYear() - age;
+    const birthMonth = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
+    const birthDay = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
+    const birthDate = `${birthYear}-${birthMonth}-${birthDay}`;
+    
+    // Générer un numéro de téléphone aléatoire
+    const phonePrefix = ['06', '07'][Math.floor(Math.random() * 2)];
+    const phoneNumber = `${phonePrefix}${Math.floor(Math.random() * 90000000) + 10000000}`;
+    
+    return {
+      firstName: randomFirstName,
+      lastName: randomLastName,
+      birthDate: birthDate,
+      sex: randomSex,
+      phone: phoneNumber,
+      address: `${Math.floor(Math.random() * 200) + 1} ${randomStreet}, ${randomCity}`,
+      emergencyContact: `${phonePrefix === '06' ? '07' : '06'}${Math.floor(Math.random() * 90000000) + 10000000}`,
+      insurance: randomInsurance,
+      idNumber: `ID${Math.floor(Math.random() * 900000) + 100000}`,
+      consentMedicalData: true,
+      consentContact: true,
+    };
+  };
+
+  const handleCreateTestPatient = async () => {
+    try {
+      const testPatient = generateRandomPatient();
+      await patientsService.create(testPatient);
+      fetchPatients();
+      setError('');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erreur lors de la création du patient test');
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR');
   };
@@ -230,9 +284,19 @@ export const PatientsList = () => {
             <Typography variant="h4">Patients</Typography>
           </Box>
           {canManagePatient && (
-            <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreate}>
-              Nouveau Patient
-            </Button>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button 
+                variant="outlined" 
+                color="secondary"
+                startIcon={<Add />} 
+                onClick={handleCreateTestPatient}
+              >
+                Patient Test
+              </Button>
+              <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreate}>
+                Nouveau Patient
+              </Button>
+            </Box>
           )}
         </Box>
 

@@ -57,7 +57,7 @@ const workflowSteps: WorkflowStep[] = [
     isOutOfScope: false 
   },
   { 
-    label: 'Check-in', 
+    label: 'Enregistrement', 
     description: 'Arrivée du patient',
     icon: <CheckCircle />,
     isOutOfScope: false 
@@ -231,7 +231,7 @@ export const WorkflowStepper = ({ appointments = [], prescriptions = [] }: Workf
       return 2;
     }
 
-    // Step 3: Check-in - Completed if any appointment has status >= CHECKED_IN
+    // Step 3: Enregistrement - Completed if any appointment has status >= CHECKED_IN
     const hasCheckedIn = [
       AppointmentStatus.CHECKED_IN,
       AppointmentStatus.IN_CONSULTATION,

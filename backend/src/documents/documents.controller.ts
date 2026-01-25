@@ -49,7 +49,7 @@ export class DocumentsController {
 
   @Delete(':id')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.SECRETARY, Role.DOCTOR, Role.BIOLOGIST, Role.ADMIN)
   async remove(@Param('id') id: string) {
     await this.documentsService.remove(id);
     return { message: 'Document supprimé avec succès' };

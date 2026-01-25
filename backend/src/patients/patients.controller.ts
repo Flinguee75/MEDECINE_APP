@@ -108,7 +108,7 @@ export class PatientsController {
 
   @Delete(':id')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(Role.SECRETARY, Role.ADMIN)
   async remove(@Param('id') id: string) {
     return this.patientsService.remove(id);
   }

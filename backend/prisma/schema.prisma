@@ -176,9 +176,10 @@ model Appointment {
 }
 
 model Prescription {
-  id     String             @id @default(uuid())
-  text   String             @db.Text // Détails de la prescription
-  status PrescriptionStatus @default(CREATED)
+  id       String             @id @default(uuid())
+  text     String             @db.Text // Détails de la prescription
+  status   PrescriptionStatus @default(CREATED)
+  category String?            @default("BIOLOGIE") // "BIOLOGIE" ou "IMAGERIE"
 
   // Lab workflow timestamps
   sampleCollectedAt   DateTime? // When sample was collected

@@ -14,7 +14,6 @@ import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { cleanDatabase, setupTestUsers, createTestPatient, createTestAppointment, createTestPrescription, prismaTest } from './test-helpers';
 import { AppointmentStatus, PrescriptionStatus } from '@prisma/client';
-import * as session from 'express-session';
 
 describe('Security and Permissions (E2E)', () => {
   let app: INestApplication;
@@ -34,19 +33,6 @@ describe('Security and Permissions (E2E)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-
-    app.use(
-      session({
-        secret: 'test-secret-key-for-security-tests',
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-          maxAge: 24 * 60 * 60 * 1000,
-          httpOnly: true,
-        },
-      }),
-    );
-
     app.setGlobalPrefix('api');
     await app.init();
 
@@ -466,6 +452,48 @@ describe('Security and Permissions (E2E)', () => {
           billingStatus: 'PAID',
         })
         .expect(200);
+    });
+  });
+
+  describe('Secretary Delete Permissions', () => {
+    it('should allow SECRETARY to delete patient', async () => {
+      const testPatient = await createTestPatient();
+
+      await request(app.getHttpServer())
+        .delete(`/api/patients/${testPatient.id}`)
+        .set('Cookie', secretaryCookie)
+        .expect(200);
+    });
+
+    it('should allow SECRETARY to delete appointment', async () => {
+      const apt = await createTestAppointment({
+        patientId: patient.id,
+        doctorId: users.doctor.id,
+        status: AppointmentStatus.SCHEDULED,
+      });
+
+      await request(app.getHttpServer())
+        .delete(`/api/appointments/${apt.id}`)
+        .set('Cookie', secretaryCookie)
+        .expect(200);
+    });
+
+    it('should deny NURSE from deleting patient', async () => {
+      const testPatient = await createTestPatient();
+
+      await request(app.getHttpServer())
+        .delete(`/api/patients/${testPatient.id}`)
+        .set('Cookie', nurseCookie)
+        .expect(403);
+    });
+
+    it('should deny DOCTOR from deleting patient', async () => {
+      const testPatient = await createTestPatient();
+
+      await request(app.getHttpServer())
+        .delete(`/api/patients/${testPatient.id}`)
+        .set('Cookie', doctorCookie)
+        .expect(403);
     });
   });
 

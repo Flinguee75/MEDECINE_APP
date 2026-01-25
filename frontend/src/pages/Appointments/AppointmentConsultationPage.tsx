@@ -101,6 +101,12 @@ export const AppointmentConsultationPage = () => {
   const [labSuccess, setLabSuccess] = useState('');
   const labDraftKey = useMemo(() => (id ? `lab-request-draft:${id}` : ''), [id]);
 
+  // États pour imagerie (réutilise les mêmes variables que lab)
+  const [imagingRequests, setImagingRequests] = useState<Prescription[]>([]);
+  const [imagingLoading, setImagingLoading] = useState(false);
+  const [imagingError, setImagingError] = useState('');
+  const [imagingSuccess, setImagingSuccess] = useState('');
+
   useEffect(() => {
     if (!id) return;
     const fetchAppointment = async () => {
@@ -124,7 +130,11 @@ export const AppointmentConsultationPage = () => {
       try {
         setLabLoading(true);
         const data = await prescriptionsService.getAll({ appointmentId: id });
-        setLabRequests(data);
+        // Filtrer par catégorie
+        const bioRequests = data.filter((p) => !p.category || p.category === 'BIOLOGIE');
+        const imgRequests = data.filter((p) => p.category === 'IMAGERIE');
+        setLabRequests(bioRequests);
+        setImagingRequests(imgRequests);
       } catch (err: any) {
         setLabError(err.response?.data?.message || 'Erreur lors du chargement des demandes biologiques');
       } finally {
@@ -300,6 +310,7 @@ export const AppointmentConsultationPage = () => {
 
       const created = await prescriptionsService.create({
         text,
+        category: 'BIOLOGIE',
         patientId: appointment.patientId,
         appointmentId: appointment.id,
       });
@@ -309,7 +320,8 @@ export const AppointmentConsultationPage = () => {
       }
 
       const updated = await prescriptionsService.getAll({ appointmentId: appointment.id });
-      setLabRequests(updated);
+      const bioRequests = updated.filter((p) => !p.category || p.category === 'BIOLOGIE');
+      setLabRequests(bioRequests);
       setLabType('');
       setLabComment('');
       setLabUrgency('STANDARD');
@@ -322,6 +334,52 @@ export const AppointmentConsultationPage = () => {
       setLabError(err.response?.data?.message || 'Erreur lors de la création de la demande');
     } finally {
       setLabLoading(false);
+    }
+  };
+
+  const handleCreateImagingRequest = async () => {
+    if (!appointment) return;
+    if (!labType.trim()) {
+      setImagingError('Veuillez renseigner le type d\'examen');
+      return;
+    }
+    try {
+      setImagingLoading(true);
+      setImagingError('');
+      setImagingSuccess('');
+      const text = [
+        `Demande d'examen d'imagerie`,
+        `Type: ${labType.trim()}`,
+        `Urgence: ${labUrgency === 'URGENT' ? 'Urgente' : 'Standard'}`,
+        labComment.trim() ? `Indication clinique: ${labComment.trim()}` : '',
+        `Consultation: ${appointment.id}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      const created = await prescriptionsService.create({
+        text,
+        category: 'IMAGERIE',
+        patientId: appointment.patientId,
+        appointmentId: appointment.id,
+      });
+
+      if (sendToLab) {
+        await prescriptionsService.sendToLab(created.id);
+      }
+
+      const updated = await prescriptionsService.getAll({ appointmentId: appointment.id });
+      const imgRequests = updated.filter((p) => p.category === 'IMAGERIE');
+      setImagingRequests(imgRequests);
+      setLabType('');
+      setLabComment('');
+      setLabUrgency('STANDARD');
+      setSendToLab(true);
+      setImagingSuccess('Examen d\'imagerie prescrit avec succès');
+    } catch (err: any) {
+      setImagingError(err.response?.data?.message || 'Erreur lors de la création de la demande');
+    } finally {
+      setImagingLoading(false);
     }
   };
 
@@ -386,26 +444,25 @@ export const AppointmentConsultationPage = () => {
         <CardContent>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={8}>
-              <Typography variant="subtitle2" color="text.secondary">
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
                 Patient
               </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
                 {appointment.patient?.firstName} {appointment.patient?.lastName}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                 {patientAge !== null ? `${patientAge} ans` : ''} {appointment.patient?.sex ? `• ${appointment.patient.sex}` : ''}
               </Typography>
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                Motif: {appointment.motif}
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                <strong>Motif:</strong> {appointment.motif}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
                 {format(new Date(appointment.date), "EEEE d MMMM yyyy 'a' HH:mm", { locale: fr })}
               </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
-                <Chip label={`Date/heure: ${new Date().toLocaleString('fr-FR')}`} size="small" />
-                {user?.name && <Chip label={`Medecin: ${user.name}`} size="small" />}
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {user?.name && <Chip label={`Infirmier/ère: ${user.name}`} size="small" color="primary" variant="outlined" />}
                 {appointment.updatedAt && (
-                  <Chip label={`Derniere maj: ${format(new Date(appointment.updatedAt), 'dd/MM/yyyy HH:mm')}`} size="small" />
+                  <Chip label={`Dernière maj: ${format(new Date(appointment.updatedAt), 'dd/MM/yyyy HH:mm')}`} size="small" />
                 )}
               </Box>
             </Grid>
@@ -474,7 +531,8 @@ export const AppointmentConsultationPage = () => {
             <Tab label="Infos patient" />
             <Tab label="Antecedents" />
             <Tab label="Examen & diagnostic" />
-            <Tab label="Prescriptions" />
+            <Tab label="Examens Biologiques" />
+            <Tab label="Examens Imagerie" />
             <Tab label="Conclusion & suivi" />
           </Tabs>
           <Divider sx={{ mt: 1 }} />
@@ -782,6 +840,95 @@ export const AppointmentConsultationPage = () => {
           </TabPanel>
 
           <TabPanel value={tab} index={4}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
+              Demande d'examen d'imagerie
+            </Typography>
+            {imagingError && <Alert severity="error" sx={{ mb: 2 }}>{imagingError}</Alert>}
+            {imagingSuccess && <Alert severity="success" sx={{ mb: 2 }}>{imagingSuccess}</Alert>}
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Type d'examen"
+                  placeholder="Ex: Radio thorax, Echo abdominale, Scanner..."
+                  value={labType}
+                  onChange={(e) => setLabType(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Urgence"
+                  value={labUrgency}
+                  onChange={(e) => setLabUrgency(e.target.value as 'STANDARD' | 'URGENT')}
+                >
+                  <MenuItem value="STANDARD">Standard</MenuItem>
+                  <MenuItem value="URGENT">Urgente</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Indication clinique"
+                  value={labComment}
+                  onChange={(e) => setLabComment(e.target.value)}
+                  multiline
+                  minRows={3}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Envoyer au service d'imagerie"
+                  value={sendToLab ? 'YES' : 'NO'}
+                  onChange={(e) => setSendToLab(e.target.value === 'YES')}
+                >
+                  <MenuItem value="YES">Oui</MenuItem>
+                  <MenuItem value="NO">Non</MenuItem>
+                </TextField>
+              </Grid>
+            </Grid>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+              <Button variant="contained" color="secondary" onClick={handleCreateImagingRequest} disabled={imagingLoading}>
+                {imagingLoading ? 'Creation...' : 'Prescrire examen imagerie'}
+              </Button>
+            </Box>
+
+            <Divider sx={{ my: 3 }} />
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
+              Examens d'imagerie prescrits
+            </Typography>
+            {imagingLoading ? (
+              <Typography variant="body2" color="text.secondary">
+                Chargement...
+              </Typography>
+            ) : imagingRequests.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                Aucun examen d'imagerie prescrit
+              </Typography>
+            ) : (
+              imagingRequests.map((req) => (
+                <Box key={req.id} sx={{ mb: 2, p: 2, border: '1px solid #e3d5ff', borderRadius: 2, bgcolor: '#faf8ff' }}>
+                  <Chip 
+                    label={formatLabStatus(req.status)} 
+                    size="small" 
+                    color="secondary"
+                    sx={{ mb: 1 }}
+                  />
+                  <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
+                    {req.text}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                    Prescrit le {format(new Date(req.createdAt), 'dd/MM/yyyy à HH:mm')}
+                  </Typography>
+                </Box>
+              ))
+            )}
+          </TabPanel>
+
+          <TabPanel value={tab} index={5}>
             <TextField
               fullWidth
               label="Conclusion"

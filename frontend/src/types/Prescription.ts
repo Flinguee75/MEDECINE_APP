@@ -15,6 +15,7 @@ export interface Prescription {
   id: string;
   text: string;
   status: PrescriptionStatus;
+  category?: string; // "BIOLOGIE" ou "IMAGERIE"
 
   // Workflow tracking
   sentToLabAt?: string;
@@ -58,6 +59,7 @@ export interface Prescription {
 
 export interface CreatePrescriptionDto {
   text: string;
+  category?: string; // "BIOLOGIE" ou "IMAGERIE"
   patientId: string;
   appointmentId?: string;
 }

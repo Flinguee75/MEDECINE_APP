@@ -93,18 +93,32 @@ export const AppointmentVitalsPage = () => {
 
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="subtitle2" color="text.secondary">
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
             Patient
           </Typography>
-          <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
             {appointment.patient?.firstName} {appointment.patient?.lastName}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {appointment.doctor?.name || ''}
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            {appointment.patient?.sex && `${appointment.patient.sex === 'M' ? 'Homme' : 'Femme'}`}
           </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
-            <Chip label={`Date/heure: ${new Date().toLocaleString('fr-FR')}`} size="small" />
-            {user?.name && <Chip label={`Infirmier: ${user.name}`} size="small" />}
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            <strong>Motif:</strong> {appointment.motif || 'Non spécifié'}
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {user?.name && <Chip label={`Infirmier/ère: ${user.name}`} size="small" color="primary" variant="outlined" />}
+            {appointment.updatedAt && (
+              <Chip 
+                label={`Dernière maj: ${new Date(appointment.updatedAt).toLocaleString('fr-FR', { 
+                  day: '2-digit', 
+                  month: '2-digit', 
+                  year: 'numeric', 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}`} 
+                size="small" 
+              />
+            )}
           </Box>
         </CardContent>
       </Card>

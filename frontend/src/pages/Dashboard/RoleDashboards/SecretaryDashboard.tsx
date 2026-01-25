@@ -32,7 +32,6 @@ import {
   AccessTime,
   Receipt,
   Event,
-  MonetizationOn,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { appointmentsService } from '../../../services/appointmentsService';
@@ -306,7 +305,7 @@ export function SecretaryDashboard() {
 
       {/* Cards de statistiques avec badges notifications */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={6}>
           <Card 
             sx={{ 
               height: '100%', 
@@ -320,7 +319,7 @@ export function SecretaryDashboard() {
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
                   <Typography variant="h6" color="text.secondary" gutterBottom>
-                    Check-in à effectuer
+                    Enregistrement à effectuer
                   </Typography>
                   <Typography variant="h3" sx={{ color: 'primary.main', fontWeight: 600 }}>
                     {scheduledAppointments.length}
@@ -329,45 +328,13 @@ export function SecretaryDashboard() {
                     Patients arrivés
                   </Typography>
                 </Box>
-                <Badge 
-                  badgeContent={scheduledAppointments.length} 
-                  color="primary"
-                  sx={{ 
-                    '& .MuiBadge-badge': { 
-                      fontSize: '0.75rem',
-                      display: scheduledAppointments.length > 0 ? 'block' : 'none'
-                    } 
-                  }}
-                >
-                  <EventAvailable sx={{ fontSize: 40, color: 'primary.main', opacity: 0.7 }} />
-                </Badge>
+                <EventAvailable sx={{ fontSize: 40, color: 'primary.main', opacity: 0.7 }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Box>
-                  <Typography variant="h6" color="text.secondary" gutterBottom>
-                    En attente de clôture
-                  </Typography>
-                  <Typography variant="h3" sx={{ color: 'warning.main', fontWeight: 600 }}>
-                    {consultationCompleted.length}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Consultations terminées
-                  </Typography>
-                </Box>
-                <MonetizationOn sx={{ fontSize: 40, color: 'warning.main', opacity: 0.7 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={6}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -389,16 +356,14 @@ export function SecretaryDashboard() {
         </Grid>
       </Grid>
 
-      {/* Section Check-in - Action prioritaire selon spécs UX */}
+      {/* Section Enregistrement - Action prioritaire selon spécs UX */}
       <Card id="check-in-section" sx={{ mb: 4 }}>
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
             <Typography variant="h5" sx={{ fontWeight: 500, color: 'primary.main' }}>
-              Check-in Patients
+              Enregistrement Patients
             </Typography>
-            <Badge badgeContent={scheduledAppointments.length} color="primary">
-              <EventAvailable />
-            </Badge>
+            <EventAvailable sx={{ color: 'primary.main' }} />
           </Box>
 
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -409,7 +374,7 @@ export function SecretaryDashboard() {
                 Tous les patients sont enregistrés
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Aucun patient en attente de check-in pour le moment.
+                Aucun patient en attente d'enregistrement pour le moment.
               </Typography>
             </Box>
           ) : (
@@ -467,11 +432,11 @@ export function SecretaryDashboard() {
                           startIcon={<CheckCircle />}
                           onClick={() => handleCheckIn(appointment.id)}
                           sx={{ 
-                            minWidth: 120,
+                            minWidth: 140,
                             fontWeight: 600
                           }}
                         >
-                          Check-in
+                          Enregistrer
                         </Button>
                       </TableCell>
                     </TableRow>

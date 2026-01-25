@@ -23,11 +23,9 @@ import {
   Science, 
   Person,
   AccessTime,
-  Assignment,
   PlayArrow,
   CheckCircle,
   LocalHospital,
-  EventAvailable,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../../context/NotificationContext';
@@ -53,7 +51,7 @@ export function NurseDashboard() {
       const prescriptions = await prescriptionsService.getAll();
 
       const checkedIn = appointments
-        .filter((apt) => apt.status === AppointmentStatus.CHECKED_IN)
+        .filter((apt) => apt.status === AppointmentStatus.CHECKED_IN && !apt.vitals)
         .sort((a, b) => {
           const aDate = new Date(a.date);
           const bDate = new Date(b.date);
@@ -64,7 +62,7 @@ export function NurseDashboard() {
       setCheckedInAppointments(checkedIn);
       setVitalsRequests(
         appointments.filter(
-          (apt) => apt.status === AppointmentStatus.CHECKED_IN && Boolean(apt.vitalsRequestedAt)
+          (apt) => apt.status === AppointmentStatus.CHECKED_IN && Boolean(apt.vitalsRequestedAt) && !apt.vitals
         )
       );
 
@@ -120,41 +118,11 @@ export function NurseDashboard() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Header avec titre, date et actions rapides */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2 }}>
-        <Box>
-          <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'primary.main', mb: 0.5 }}>
-            Soins Infirmiers
-          </Typography>
-           
-        </Box>
-        
-        {/* Boutons d'action rapide - Déplacés en haut */}
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <Button
-            variant="outlined"
-            startIcon={<EventAvailable />}
-            onClick={() => navigate('/appointments')}
-          >
-            Planning
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<Assignment />}
-            onClick={() => navigate('/prescriptions')}
-          >
-            Prescriptions
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<MonitorHeart />}
-            onClick={() => checkedInAppointments.length > 0 && handleEnterVitals(checkedInAppointments[0].id)}
-            disabled={checkedInAppointments.length === 0}
-            sx={{ boxShadow: 2 }}
-          >
-            {checkedInAppointments.length > 0 ? 'Prochaines constantes' : 'Aucun patient'}
-          </Button>
-        </Box>
+      {/* Header avec titre */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, color: 'primary.main', mb: 0.5 }}>
+          Soins Infirmiers
+        </Typography>
       </Box>
 
       {/* Alert prioritaire si échantillons urgents */}

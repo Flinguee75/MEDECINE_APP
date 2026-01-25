@@ -43,7 +43,7 @@ import { appointmentsService } from '../../../services/appointmentsService';
 import { prescriptionsService } from '../../../services/prescriptionsService';
 import { Appointment, AppointmentStatus } from '../../../types/Appointment';
 import { Prescription, PrescriptionStatus } from '../../../types/Prescription';
-import { WorkflowStatusChip, PrescriptionStatusChip } from '../../../components/StatusChips';
+import { PrescriptionStatusChip } from '../../../components/StatusChips';
 
 export function DoctorDashboard() {
   const { user } = useAuth();

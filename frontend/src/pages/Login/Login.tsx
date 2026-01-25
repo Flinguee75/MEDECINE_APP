@@ -2,15 +2,15 @@ import { useState, FormEvent } from 'react';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   TextField,
   Typography,
   Alert,
-  Container,
+  Stack,
+  alpha,
 } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -20,6 +20,20 @@ export const Login = () => {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  const testAccounts = [
+    { role: 'Admin', email: 'admin@hospital.com', password: 'admin123' },
+    { role: 'Secrétaire', email: 'secretary@hospital.com', password: 'secretary123' },
+    { role: 'Médecin', email: 'doctor@hospital.com', password: 'doctor123' },
+    { role: 'Biologiste', email: 'biologist@hospital.com', password: 'biologist123' },
+    { role: 'Infirmier', email: 'nurse@hospital.com', password: 'nurse123' },
+  ];
+
+  const handleTestAccountClick = (account: { email: string; password: string }) => {
+    setEmail(account.email);
+    setPassword(account.password);
+    setError('');
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -39,42 +53,84 @@ export const Login = () => {
   };
 
   return (
-    <Container maxWidth="sm">
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: `linear-gradient(135deg, #1976D2 53%, #0D47A1 100%)`,
+        p: 3,
+      }}
+    >
       <Box
         sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          width: '100%',
+          maxWidth: 900,
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          gap: 0,
+          backgroundColor: '#fff',
+          borderRadius: 3,
+          overflow: 'hidden',
+          boxShadow: `0 20px 60px ${alpha('#000', 0.3)}`,
         }}
       >
-        <Card sx={{ width: '100%', maxWidth: 450 }}>
-          <CardContent sx={{ p: 4 }}>
-            <Typography
-              variant="h4"
-              component="h1"
-              align="center"
-              gutterBottom
-              sx={{ mb: 1 }}
-            >
-              Centre de Cardiologie EDLONA
-            </Typography>
-            <Typography
-              variant="subtitle1"
-              align="center"
-              color="text.secondary"
-              sx={{ mb: 4 }}
-            >
-              Système de Gestion
-            </Typography>
+        {/* Section gauche - Branding */}
+        <Box
+          sx={{
+            background: `linear-gradient(135deg, #1976D2 0%, #0D47A1 100%)`,
+            p: { xs: 4, md: 6 },
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            textAlign: 'center',
+            color: '#fff',
+          }}
+        >
+          <Box
+            sx={{
+              width: 80,
+              height: 80,
+              borderRadius: '50%',
+              backgroundColor: alpha('#fff', 0.2),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mb: 3,
+            }}
+          >
+            <LocalHospitalIcon sx={{ fontSize: 48 }} />
+          </Box>
+          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+            EDLONA
+          </Typography>
+          <Typography variant="h6" sx={{ fontWeight: 400, opacity: 0.9 }}>
+            Centre de Cardiologie
+          </Typography>
+          <Box sx={{ mt: 4, opacity: 0.8 }}>
+            <Typography variant="body2">Système de Gestion Médical</Typography>
+          </Box>
+        </Box>
 
-            {error && (
-              <Alert severity="error" sx={{ mb: 3 }}>
-                {error}
-              </Alert>
-            )}
+        {/* Section droite - Formulaire */}
+        <Box sx={{ p: { xs: 4, md: 6 } }}>
+          <Typography variant="h5" sx={{ fontWeight: 600, mb: 1 }}>
+            Connexion
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+            Accédez à votre espace de travail
+          </Typography>
 
-            <form onSubmit={handleSubmit}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <Stack spacing={3}>
               <TextField
                 fullWidth
                 label="Email"
@@ -82,7 +138,6 @@ export const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                margin="normal"
                 autoFocus
               />
 
@@ -93,7 +148,6 @@ export const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                margin="normal"
               />
 
               <Button
@@ -102,35 +156,56 @@ export const Login = () => {
                 variant="contained"
                 size="large"
                 disabled={loading}
-                sx={{ mt: 3 }}
+                sx={{ py: 1.5, fontSize: '1rem', fontWeight: 600 }}
               >
                 {loading ? 'Connexion...' : 'Se connecter'}
               </Button>
-            </form>
+            </Stack>
+          </form>
 
-            <Box sx={{ mt: 4, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
-              <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                <strong>Comptes de test :</strong>
-              </Typography>
-              <Typography variant="caption" color="text.secondary" display="block">
-                Admin: admin@hospital.com / admin123
-              </Typography>
-              <Typography variant="caption" color="text.secondary" display="block">
-                Médecin: doctor@hospital.com / doctor123
-              </Typography>
-              <Typography variant="caption" color="text.secondary" display="block">
-                Biologiste: biologist@hospital.com / biologist123
-              </Typography>
-              <Typography variant="caption" color="text.secondary" display="block">
-                Secrétaire: secretary@hospital.com / secretary123
-              </Typography>
-              <Typography variant="caption" color="text.secondary" display="block">
-                Infirmier: nurse@hospital.com / nurse123
-              </Typography>
-            </Box>
-          </CardContent>
-        </Card>
+          <Box
+            sx={{
+              mt: 4,
+              p: 2,
+              bgcolor: alpha('#1976D2', 0.05),
+              borderRadius: 2,
+              borderLeft: `3px solid #1976D2`,
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                display: 'block',
+                fontWeight: 600,
+                color: 'primary.main',
+                mb: 1,
+              }}
+            >
+              COMPTES DE TEST
+            </Typography>
+            <Stack spacing={0.5}>
+              {testAccounts.map((account) => (
+                <Typography
+                  key={account.role}
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      color: 'primary.main',
+                      fontWeight: 600,
+                    },
+                  }}
+                  onClick={() => handleTestAccountClick(account)}
+                >
+                  {account.role}: {account.email} / {account.password}
+                </Typography>
+              ))}
+            </Stack>
+          </Box>
+        </Box>
       </Box>
-    </Container>
+    </Box>
   );
 };

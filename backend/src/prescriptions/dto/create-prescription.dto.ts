@@ -5,6 +5,10 @@ export class CreatePrescriptionDto {
   @IsNotEmpty()
   text: string;
 
+  @IsString()
+  @IsOptional()
+  category?: string; // "BIOLOGIE" ou "IMAGERIE"
+
   @IsUUID()
   @IsNotEmpty()
   patientId: string;
