@@ -6,7 +6,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import Grid from '@mui/material/GridLegacy';
-import { Science, Biotech } from '@mui/icons-material';
+import { CameraAlt, Biotech, CheckCircle } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { prescriptionsService } from '../../../services/prescriptionsService';
 import { Prescription, PrescriptionStatus } from '../../../types/Prescription';
@@ -15,38 +15,45 @@ import { StatCard } from '../../../components/StatCard';
 import { QuickActionCard } from '../../../components/QuickActionCard';
 import { EmptyState } from '../../../components/EmptyState';
 
-export function BiologistDashboard() {
+export function RadiologistDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [pendingRequests, setPendingRequests] = useState<Prescription[]>([]);
-  const [samplesReceived, setSamplesReceived] = useState<Prescription[]>([]);
   const [inProgress, setInProgress] = useState<Prescription[]>([]);
+  const [completedToday, setCompletedToday] = useState<Prescription[]>([]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       const prescriptions = await prescriptionsService.getAll();
       
-      // Filtrer uniquement les prescriptions de BIOLOGIE (pas d'imagerie)
-      const activePrescriptions = prescriptions.filter(
-        (p) => p.appointment?.status !== AppointmentStatus.CANCELLED &&
-               p.category === 'BIOLOGIE'
+      // Filtrer uniquement les prescriptions d'imagerie
+      const imagingPrescriptions = prescriptions.filter(
+        (p) => p.category === 'IMAGERIE' && p.appointment?.status !== AppointmentStatus.CANCELLED
       );
 
+      // Demandes en attente (envoyées au service)
       setPendingRequests(
-        activePrescriptions.filter(
-          (p) => p.status === PrescriptionStatus.SENT_TO_LAB && !p.sampleCollectedAt
+        imagingPrescriptions.filter(
+          (p) => p.status === PrescriptionStatus.SENT_TO_LAB
         )
       );
 
-      setSamplesReceived(
-        activePrescriptions.filter(
-          (p) => p.status === PrescriptionStatus.SENT_TO_LAB && p.sampleCollectedAt
-        )
-      );
-
+      // Examens en cours
       setInProgress(
-        activePrescriptions.filter((p) => p.status === PrescriptionStatus.IN_PROGRESS)
+        imagingPrescriptions.filter((p) => p.status === PrescriptionStatus.IN_PROGRESS)
+      );
+
+      // Examens terminés aujourd'hui
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      setCompletedToday(
+        imagingPrescriptions.filter(
+          (p) => 
+            (p.status === PrescriptionStatus.RESULTS_AVAILABLE || 
+             p.status === PrescriptionStatus.COMPLETED) &&
+            new Date(p.updatedAt) >= today
+        )
       );
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -59,12 +66,12 @@ export function BiologistDashboard() {
     loadData();
   }, []);
 
-  const handleStartAnalysis = async (prescriptionId: string) => {
+  const handleStartExam = async (prescriptionId: string) => {
     try {
       await prescriptionsService.startAnalysis(prescriptionId);
       await loadData();
     } catch (error) {
-      console.error('Failed to start analysis:', error);
+      console.error('Failed to start exam:', error);
     }
   };
 
@@ -83,7 +90,7 @@ export function BiologistDashboard() {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" gutterBottom>
-        Tableau de bord Biologiste
+        Tableau de bord Radiologue
       </Typography>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -91,85 +98,85 @@ export function BiologistDashboard() {
           <StatCard
             title="Demandes reçues"
             value={pendingRequests.length}
-            icon={<Science />}
-            color="#1976d2"
+            icon={<CameraAlt />}
+            color="#9c27b0"
           />
         </Grid>
         <Grid item xs={12} md={4}>
           <StatCard
-            title="Échantillons reçus"
-            value={samplesReceived.length}
-            icon={<Science />}
-            color="#388e3c"
-          />
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <StatCard
-            title="Analyses en cours"
+            title="Examens en cours"
             value={inProgress.length}
             icon={<Biotech />}
             color="#f57c00"
           />
         </Grid>
+        <Grid item xs={12} md={4}>
+          <StatCard
+            title="Terminés aujourd'hui"
+            value={completedToday.length}
+            icon={<CheckCircle />}
+            color="#388e3c"
+          />
+        </Grid>
       </Grid>
 
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Demandes reçues
+        <Typography variant="h6" gutterBottom sx={{ color: '#9c27b0', fontWeight: 600 }}>
+          Demandes en attente
         </Typography>
         {pendingRequests.length === 0 ? (
-          <EmptyState message="Aucune demande reçue" />
+          <EmptyState message="Aucune demande d'imagerie en attente" />
         ) : (
           pendingRequests.map((prescription) => (
             <QuickActionCard
               key={prescription.id}
               title={`${prescription.patient?.firstName} ${prescription.patient?.lastName}`}
-              subtitle={`Prescription de Dr. ${prescription.doctor?.name}`}
-              status="En attente d'échantillon"
-              statusColor="warning"
-              actionLabel="Voir demande"
-              onAction={() => navigate('/prescriptions')}
+              subtitle={prescription.text.split('\n')[1] || prescription.text.substring(0, 100)}
+              status="En attente"
+              statusColor="secondary"
+              actionLabel="Démarrer l'examen"
+              onAction={() => handleStartExam(prescription.id)}
             />
           ))
         )}
       </Box>
 
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Échantillons reçus
+        <Typography variant="h6" gutterBottom sx={{ color: '#f57c00', fontWeight: 600 }}>
+          Examens en cours
         </Typography>
-        {samplesReceived.length === 0 ? (
-          <EmptyState message="Aucun échantillon reçu" />
+        {inProgress.length === 0 ? (
+          <EmptyState message="Aucun examen en cours" />
         ) : (
-          samplesReceived.map((prescription) => (
+          inProgress.map((prescription) => (
             <QuickActionCard
               key={prescription.id}
               title={`${prescription.patient?.firstName} ${prescription.patient?.lastName}`}
-              subtitle={`Prescription de Dr. ${prescription.doctor?.name}`}
-              status="Échantillon collecté"
+              subtitle={prescription.text.split('\n')[1] || prescription.text.substring(0, 100)}
+              status="En cours"
               statusColor="primary"
-              actionLabel="Démarrer analyse"
-              onAction={() => handleStartAnalysis(prescription.id)}
+              actionLabel="Saisir les résultats"
+              onAction={() => handleEnterResults(prescription.id)}
             />
           ))
         )}
       </Box>
 
       <Box>
-        <Typography variant="h6" gutterBottom>
-          Analyses en cours
+        <Typography variant="h6" gutterBottom sx={{ color: '#388e3c', fontWeight: 600 }}>
+          Examens terminés aujourd'hui
         </Typography>
-        {inProgress.length === 0 ? (
-          <EmptyState message="Aucune analyse en cours" />
+        {completedToday.length === 0 ? (
+          <EmptyState message="Aucun examen terminé aujourd'hui" />
         ) : (
-          inProgress.map((prescription) => (
+          completedToday.map((prescription) => (
             <QuickActionCard
               key={prescription.id}
               title={`${prescription.patient?.firstName} ${prescription.patient?.lastName}`}
-              subtitle={prescription.text.substring(0, 100)}
-              status="En cours"
-              statusColor="primary"
-              actionLabel="Saisir résultats"
+              subtitle={prescription.text.split('\n')[1] || prescription.text.substring(0, 100)}
+              status="Terminé"
+              statusColor="success"
+              actionLabel="Voir les résultats"
               onAction={() => handleEnterResults(prescription.id)}
             />
           ))

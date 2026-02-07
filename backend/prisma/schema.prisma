@@ -21,6 +21,7 @@ enum Role {
   BIOLOGIST
   NURSE
   SECRETARY
+  RADIOLOGIST
 }
 
 enum AppointmentStatus {

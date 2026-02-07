@@ -66,9 +66,12 @@ export function NurseDashboard() {
         )
       );
 
+      // Filtrer uniquement les prescriptions de BIOLOGIE (pas d'imagerie)
       setSamplesToCollect(
         prescriptions.filter(
-          (p) => p.status === PrescriptionStatus.SENT_TO_LAB && !p.sampleCollectedAt
+          (p) => p.status === PrescriptionStatus.SENT_TO_LAB && 
+                 !p.sampleCollectedAt &&
+                 p.category === 'BIOLOGIE'
         )
       );
     } catch (error) {

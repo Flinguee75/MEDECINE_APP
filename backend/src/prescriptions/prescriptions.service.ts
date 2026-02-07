@@ -38,6 +38,7 @@ export class PrescriptionsService {
     return this.prisma.prescription.create({
       data: {
         text: createPrescriptionDto.text,
+        category: createPrescriptionDto.category || 'BIOLOGIE',
         patientId: createPrescriptionDto.patientId,
         appointmentId: createPrescriptionDto.appointmentId,
         doctorId,
@@ -160,6 +161,11 @@ export class PrescriptionsService {
       throw new ForbiddenException('La prescription doit être au statut SENT_TO_LAB');
     }
 
+    // Only BIOLOGIE prescriptions require sample collection
+    if (prescription.category !== 'BIOLOGIE') {
+      throw new ForbiddenException('Seules les prescriptions de biologie nécessitent une collecte d\'échantillon');
+    }
+
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('Utilisateur non trouvé');
@@ -191,6 +197,11 @@ export class PrescriptionsService {
 
     if (prescription.status !== PrescriptionStatus.SENT_TO_LAB) {
       throw new ForbiddenException('La prescription doit être au statut SENT_TO_LAB');
+    }
+
+    // Only BIOLOGIE prescriptions can be analyzed by biologist
+    if (prescription.category !== 'BIOLOGIE') {
+      throw new ForbiddenException('Seules les prescriptions de biologie peuvent être analysées par le biologiste');
     }
 
     if (!prescription.sampleCollectedAt) {

@@ -30,7 +30,7 @@ export class PatientsController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles(Role.SECRETARY, Role.ADMIN)
+  @Roles(Role.SECRETARY, Role.DOCTOR, Role.ADMIN)
   async create(@Body() createPatientDto: CreatePatientDto) {
     const patient = await this.patientsService.create(createPatientDto);
     return {

@@ -27,6 +27,7 @@ export const Login = () => {
     { role: 'Médecin', email: 'doctor@hospital.com', password: 'doctor123' },
     { role: 'Biologiste', email: 'biologist@hospital.com', password: 'biologist123' },
     { role: 'Infirmier', email: 'nurse@hospital.com', password: 'nurse123' },
+    { role: 'Radiologue', email: 'radiologist@hospital.com', password: 'radiologist123' },
   ];
 
   const handleTestAccountClick = (account: { email: string; password: string }) => {

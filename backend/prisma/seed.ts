@@ -12,6 +12,7 @@ async function main() {
   const biologistPassword = await bcrypt.hash('biologist123', 10);
   const secretaryPassword = await bcrypt.hash('secretary123', 10);
   const nursePassword = await bcrypt.hash('nurse123', 10);
+  const radiologistPassword = await bcrypt.hash('radiologist123', 10);
 
   const admin = await prisma.user.upsert({
     where: { email: 'admin@hospital.com' },
@@ -78,11 +79,24 @@ async function main() {
     },
   });
 
+  const radiologist = await prisma.user.upsert({
+    where: { email: 'radiologist@hospital.com' },
+    update: {
+      name: 'Dr. Kouassi (Radiologue)',
+    },
+    create: {
+      name: 'Dr. Kouassi (Radiologue)',
+      email: 'radiologist@hospital.com',
+      password: radiologistPassword,
+      role: 'RADIOLOGIST',
+    },
+  });
+
   console.log('✅ Users created');
   console.log('🎉 Seeding complete (accounts only)!');
   console.log('');
   console.log('📊 Database state summary:');
-  console.log('  - 5 users (ADMIN, DOCTOR, BIOLOGIST, SECRETARY, NURSE)');
+  console.log('  - 6 users (ADMIN, DOCTOR, BIOLOGIST, SECRETARY, NURSE, RADIOLOGIST)');
   console.log('');
   console.log('🔑 Test credentials:');
   console.log('  - Admin: admin@hospital.com / admin123');
@@ -90,6 +104,7 @@ async function main() {
   console.log('  - Biologist: biologist@hospital.com / biologist123');
   console.log('  - Secretary: secretary@hospital.com / secretary123');
   console.log('  - Nurse: nurse@hospital.com / nurse123');
+  console.log('  - Radiologist: radiologist@hospital.com / radiologist123');
 }
 
 main()

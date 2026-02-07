@@ -151,6 +151,7 @@ describe('PrescriptionsService', () => {
       id: 'presc-123',
       text: 'Complete Blood Count',
       status: PrescriptionStatus.SENT_TO_LAB,
+      category: 'BIOLOGIE',
       patientId: 'patient-123',
       doctorId: 'doctor-123',
       nurseId: null,
@@ -205,6 +206,23 @@ describe('PrescriptionsService', () => {
       ).rejects.toThrow('La prescription doit être au statut SENT_TO_LAB');
     });
 
+    it('should fail if prescription is not BIOLOGIE category', async () => {
+      mockPrismaService.prescription.findUnique.mockResolvedValue({
+        ...mockPrescription,
+        category: 'IMAGERIE',
+      });
+      mockPrismaService.user.findUnique.mockResolvedValue(mockNurse);
+
+      await expect(
+        service.collectSample('presc-123', 'nurse-123', {}),
+      ).rejects.toThrow(ForbiddenException);
+      await expect(
+        service.collectSample('presc-123', 'nurse-123', {}),
+      ).rejects.toThrow(
+        'Seules les prescriptions de biologie nécessitent une collecte d\'échantillon',
+      );
+    });
+
     it('should fail if user is not NURSE', async () => {
       mockPrismaService.prescription.findUnique.mockResolvedValue(mockPrescription);
       mockPrismaService.user.findUnique.mockResolvedValue({
@@ -257,6 +275,7 @@ describe('PrescriptionsService', () => {
       id: 'presc-123',
       text: 'Complete Blood Count',
       status: PrescriptionStatus.SENT_TO_LAB,
+      category: 'BIOLOGIE',
       patientId: 'patient-123',
       doctorId: 'doctor-123',
       nurseId: 'nurse-123',
@@ -295,6 +314,23 @@ describe('PrescriptionsService', () => {
         },
         include: expect.any(Object),
       });
+    });
+
+    it('should fail if prescription is not BIOLOGIE category', async () => {
+      mockPrismaService.prescription.findUnique.mockResolvedValue({
+        ...mockPrescription,
+        category: 'IMAGERIE',
+      });
+      mockPrismaService.user.findUnique.mockResolvedValue(mockBiologist);
+
+      await expect(
+        service.startAnalysis('presc-123', 'biologist-123', {}),
+      ).rejects.toThrow(ForbiddenException);
+      await expect(
+        service.startAnalysis('presc-123', 'biologist-123', {}),
+      ).rejects.toThrow(
+        'Seules les prescriptions de biologie peuvent être analysées par le biologiste',
+      );
     });
 
     it('should fail if sample not collected', async () => {

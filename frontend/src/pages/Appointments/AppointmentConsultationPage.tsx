@@ -14,7 +14,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
+import { ArrowBack, Assignment, MedicalServices } from '@mui/icons-material';
+import { useNotification } from '../../context/NotificationContext';
+import { generateImagingPrescriptionPDF } from '../../utils/pdfGenerator';
 import Grid from '@mui/material/GridLegacy';
 import { useNavigate, useParams } from 'react-router-dom';
 import { appointmentsService } from '../../services/appointmentsService';
@@ -106,6 +108,10 @@ export const AppointmentConsultationPage = () => {
   const [imagingLoading, setImagingLoading] = useState(false);
   const [imagingError, setImagingError] = useState('');
   const [imagingSuccess, setImagingSuccess] = useState('');
+  const [imagingWithContrast, setImagingWithContrast] = useState(false);
+  const [imagingAllergies, setImagingAllergies] = useState('');
+  const [imagingPreviousExams, setImagingPreviousExams] = useState('');
+  const { showSuccess } = useNotification();
 
   useEffect(() => {
     if (!id) return;
@@ -339,23 +345,54 @@ export const AppointmentConsultationPage = () => {
 
   const handleCreateImagingRequest = async () => {
     if (!appointment) return;
+    
+    // Validation
     if (!labType.trim()) {
-      setImagingError('Veuillez renseigner le type d\'examen');
+      setImagingError('Veuillez sélectionner le type d\'examen');
       return;
     }
+    if (!labComment.trim()) {
+      setImagingError('Veuillez préciser la région anatomique');
+      return;
+    }
+    if (!soins.trim()) {
+      setImagingError('Veuillez renseigner l\'indication clinique');
+      return;
+    }
+    
     try {
       setImagingLoading(true);
       setImagingError('');
       setImagingSuccess('');
-      const text = [
-        `Demande d'examen d'imagerie`,
-        `Type: ${labType.trim()}`,
-        `Urgence: ${labUrgency === 'URGENT' ? 'Urgente' : 'Standard'}`,
-        labComment.trim() ? `Indication clinique: ${labComment.trim()}` : '',
-        `Consultation: ${appointment.id}`,
-      ]
-        .filter(Boolean)
-        .join('\n');
+      
+      // Construction du texte de la prescription avec tous les détails
+      const textParts = [
+        `═══════════════════════════════════════════════════`,
+        `DEMANDE D'EXAMEN D'IMAGERIE MÉDICALE`,
+        `═══════════════════════════════════════════════════`,
+        ``,
+        `📋 TYPE D'EXAMEN: ${labType.trim()}`,
+        `📍 RÉGION ANATOMIQUE: ${labComment.trim()}`,
+        `⚡ URGENCE: ${labUrgency === 'URGENT' ? '🔴 URGENTE' : '🟢 Standard'}`,
+        imagingWithContrast ? `💉 AVEC INJECTION DE PRODUIT DE CONTRASTE` : '',
+        ``,
+        `🩺 INDICATION CLINIQUE / RENSEIGNEMENTS CLINIQUES:`,
+        soins.trim(),
+        ``,
+        arretTravail.trim() ? `❓ QUESTION DIAGNOSTIQUE:\n${arretTravail.trim()}\n` : '',
+        imagingAllergies.trim() ? `⚠️  ALLERGIES CONNUES:\n${imagingAllergies.trim()}\n` : '',
+        imagingPreviousExams.trim() ? `📅 EXAMENS ANTÉRIEURS:\n${imagingPreviousExams.trim()}\n` : '',
+        ``,
+        `───────────────────────────────────────────────────`,
+        `👤 Patient: ${appointment.patient?.firstName} ${appointment.patient?.lastName}`,
+        `📅 Date de naissance: ${appointment.patient?.birthDate ? format(new Date(appointment.patient.birthDate), 'dd/MM/yyyy', { locale: fr }) : 'N/A'}`,
+        `🆔 Consultation: ${appointment.id}`,
+        `👨‍⚕️ Médecin prescripteur: Dr. ${user?.name}`,
+        `📅 Date de prescription: ${format(new Date(), 'dd/MM/yyyy à HH:mm', { locale: fr })}`,
+        `═══════════════════════════════════════════════════`,
+      ];
+      
+      const text = textParts.filter(Boolean).join('\n');
 
       const created = await prescriptionsService.create({
         text,
@@ -371,10 +408,18 @@ export const AppointmentConsultationPage = () => {
       const updated = await prescriptionsService.getAll({ appointmentId: appointment.id });
       const imgRequests = updated.filter((p) => p.category === 'IMAGERIE');
       setImagingRequests(imgRequests);
+      
+      // Réinitialiser les champs
       setLabType('');
       setLabComment('');
+      setSoins('');
+      setArretTravail('');
       setLabUrgency('STANDARD');
+      setImagingWithContrast(false);
+      setImagingAllergies('');
+      setImagingPreviousExams('');
       setSendToLab(true);
+      
       setImagingSuccess('Examen d\'imagerie prescrit avec succès');
     } catch (err: any) {
       setImagingError(err.response?.data?.message || 'Erreur lors de la création de la demande');
@@ -845,56 +890,193 @@ export const AppointmentConsultationPage = () => {
             </Typography>
             {imagingError && <Alert severity="error" sx={{ mb: 2 }}>{imagingError}</Alert>}
             {imagingSuccess && <Alert severity="success" sx={{ mb: 2 }}>{imagingSuccess}</Alert>}
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Type d'examen"
-                  placeholder="Ex: Radio thorax, Echo abdominale, Scanner..."
-                  value={labType}
-                  onChange={(e) => setLabType(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Urgence"
-                  value={labUrgency}
-                  onChange={(e) => setLabUrgency(e.target.value as 'STANDARD' | 'URGENT')}
-                >
-                  <MenuItem value="STANDARD">Standard</MenuItem>
-                  <MenuItem value="URGENT">Urgente</MenuItem>
-                </TextField>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Indication clinique"
-                  value={labComment}
-                  onChange={(e) => setLabComment(e.target.value)}
-                  multiline
-                  minRows={3}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Envoyer au service d'imagerie"
-                  value={sendToLab ? 'YES' : 'NO'}
-                  onChange={(e) => setSendToLab(e.target.value === 'YES')}
-                >
-                  <MenuItem value="YES">Oui</MenuItem>
-                  <MenuItem value="NO">Non</MenuItem>
-                </TextField>
-              </Grid>
-            </Grid>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-              <Button variant="contained" color="secondary" onClick={handleCreateImagingRequest} disabled={imagingLoading}>
-                {imagingLoading ? 'Creation...' : 'Prescrire examen imagerie'}
-              </Button>
-            </Box>
+            
+            <Card sx={{ mb: 3, bgcolor: '#f8f9fa' }}>
+              <CardContent>
+                <Grid container spacing={2}>
+                  {/* Type d'examen */}
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="Type d'examen *"
+                      value={labType}
+                      onChange={(e) => setLabType(e.target.value)}
+                      helperText="Sélectionnez le type d'examen radiologique"
+                    >
+                      <MenuItem value="">-- Sélectionner --</MenuItem>
+                      <MenuItem value="Radiographie standard">Radiographie standard</MenuItem>
+                      <MenuItem value="Échographie">Échographie</MenuItem>
+                      <MenuItem value="Scanner (TDM)">Scanner (TDM)</MenuItem>
+                      <MenuItem value="IRM">IRM</MenuItem>
+                      <MenuItem value="Mammographie">Mammographie</MenuItem>
+                      <MenuItem value="Doppler">Doppler</MenuItem>
+                      <MenuItem value="Autre">Autre</MenuItem>
+                    </TextField>
+                  </Grid>
+
+                  {/* Région anatomique */}
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Région anatomique *"
+                      placeholder="Ex: Thorax, Abdomen, Membre inférieur..."
+                      value={labComment}
+                      onChange={(e) => setLabComment(e.target.value)}
+                      helperText="Précisez la zone à examiner"
+                    />
+                  </Grid>
+
+                  {/* Urgence */}
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="Urgence *"
+                      value={labUrgency}
+                      onChange={(e) => setLabUrgency(e.target.value as 'STANDARD' | 'URGENT')}
+                    >
+                      <MenuItem value="STANDARD">Standard</MenuItem>
+                      <MenuItem value="URGENT">Urgente</MenuItem>
+                    </TextField>
+                  </Grid>
+
+                  {/* Avec injection */}
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="Avec injection de produit de contraste"
+                      value={imagingWithContrast ? 'YES' : 'NO'}
+                      onChange={(e) => setImagingWithContrast(e.target.value === 'YES')}
+                    >
+                      <MenuItem value="NO">Non</MenuItem>
+                      <MenuItem value="YES">Oui</MenuItem>
+                    </TextField>
+                  </Grid>
+
+                  {/* Envoyer au service */}
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="Envoyer au radiologue"
+                      value={sendToLab ? 'YES' : 'NO'}
+                      onChange={(e) => setSendToLab(e.target.value === 'YES')}
+                    >
+                      <MenuItem value="YES">Oui</MenuItem>
+                      <MenuItem value="NO">Non (brouillon)</MenuItem>
+                    </TextField>
+                  </Grid>
+
+                  {/* Indication clinique */}
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Indication clinique / Renseignements cliniques *"
+                      placeholder="Motif de l'examen, symptômes, antécédents pertinents..."
+                      value={soins}
+                      onChange={(e) => setSoins(e.target.value)}
+                      multiline
+                      minRows={3}
+                      helperText="Informations nécessaires pour orienter l'examen radiologique"
+                    />
+                  </Grid>
+
+                  {/* Question diagnostique */}
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Question diagnostique"
+                      placeholder="Ex: Recherche de pneumopathie, éliminer une fracture..."
+                      value={arretTravail}
+                      onChange={(e) => setArretTravail(e.target.value)}
+                      multiline
+                      minRows={2}
+                      helperText="Question précise à laquelle l'examen doit répondre"
+                    />
+                  </Grid>
+
+                  {/* Antécédents / Allergies */}
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Allergies connues"
+                      placeholder="Ex: Allergie à l'iode, aux produits de contraste..."
+                      value={imagingAllergies}
+                      onChange={(e) => setImagingAllergies(e.target.value)}
+                      multiline
+                      minRows={2}
+                    />
+                  </Grid>
+
+                  {/* Examens antérieurs */}
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Examens antérieurs"
+                      placeholder="Examens similaires déjà réalisés (dates)"
+                      value={imagingPreviousExams}
+                      onChange={(e) => setImagingPreviousExams(e.target.value)}
+                      multiline
+                      minRows={2}
+                    />
+                  </Grid>
+                </Grid>
+
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
+                  <Button 
+                    variant="outlined" 
+                    color="secondary"
+                    startIcon={<Assignment />}
+                    onClick={() => {
+                      if (!appointment) return;
+                      
+                      // Validation avant génération
+                      if (!labType.trim() || !labComment.trim() || !soins.trim()) {
+                        setImagingError('Veuillez remplir tous les champs obligatoires avant de générer le PDF');
+                        return;
+                      }
+                      
+                      try {
+                        generateImagingPrescriptionPDF({
+                          patientName: `${appointment.patient?.firstName} ${appointment.patient?.lastName}`,
+                          patientDOB: appointment.patient?.birthDate 
+                            ? format(new Date(appointment.patient.birthDate), 'dd/MM/yyyy', { locale: fr })
+                            : 'N/A',
+                          doctorName: user?.name || 'N/A',
+                          examType: labType,
+                          anatomicalRegion: labComment,
+                          urgency: labUrgency,
+                          withContrast: imagingWithContrast,
+                          clinicalIndication: soins,
+                          diagnosticQuestion: arretTravail || undefined,
+                          allergies: imagingAllergies || undefined,
+                          previousExams: imagingPreviousExams || undefined,
+                          prescriptionDate: new Date(),
+                          consultationId: appointment.id,
+                        });
+                        showSuccess('Prescription PDF générée avec succès');
+                      } catch (error) {
+                        setImagingError('Erreur lors de la génération du PDF');
+                      }
+                    }}
+                    disabled={!labType || !labComment || !soins}
+                  >
+                    Générer prescription PDF
+                  </Button>
+                  <Button 
+                    variant="contained" 
+                    color="secondary" 
+                    onClick={handleCreateImagingRequest} 
+                    disabled={imagingLoading}
+                    startIcon={<MedicalServices />}
+                  >
+                    {imagingLoading ? 'Création...' : 'Prescrire examen'}
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
 
             <Divider sx={{ my: 3 }} />
             <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>

@@ -14,6 +14,7 @@ import { SecretaryDashboard } from './RoleDashboards/SecretaryDashboard';
 import { NurseDashboard } from './RoleDashboards/NurseDashboard';
 import { DoctorDashboard } from './RoleDashboards/DoctorDashboard';
 import { BiologistDashboard } from './RoleDashboards/BiologistDashboard';
+import { RadiologistDashboard } from './RoleDashboards/RadiologistDashboard';
 
 export const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -40,6 +41,8 @@ export const Dashboard = () => {
         return 'Infirmier';
       case 'SECRETARY':
         return 'Secrétaire';
+      case 'RADIOLOGIST':
+        return 'Radiologue';
       default:
         return role;
     }
@@ -57,6 +60,8 @@ export const Dashboard = () => {
         return '#00897b';
       case 'SECRETARY':
         return '#f57c00';
+      case 'RADIOLOGIST':
+        return '#9c27b0';
       default:
         return '#757575';
     }
@@ -69,6 +74,7 @@ export const Dashboard = () => {
       'Biologiste',
       'Infirmier',
       'Secrétaire',
+      'Radiologue',
     ];
     let displayName = name;
 
@@ -92,6 +98,8 @@ export const Dashboard = () => {
         return <DoctorDashboard />;
       case Role.BIOLOGIST:
         return <BiologistDashboard />;
+      case Role.RADIOLOGIST:
+        return <RadiologistDashboard />;
       case Role.ADMIN:
         // Admin can see doctor dashboard for now, or create a separate AdminDashboard
         return <DoctorDashboard />;

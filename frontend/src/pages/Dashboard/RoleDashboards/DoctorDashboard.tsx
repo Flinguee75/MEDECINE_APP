@@ -41,6 +41,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { appointmentsService } from '../../../services/appointmentsService';
 import { prescriptionsService } from '../../../services/prescriptionsService';
+import { patientsService } from '../../../services/patientsService';
 import { Appointment, AppointmentStatus } from '../../../types/Appointment';
 import { Prescription, PrescriptionStatus } from '../../../types/Prescription';
 import { PrescriptionStatusChip } from '../../../components/StatusChips';
@@ -142,6 +143,52 @@ export function DoctorDashboard() {
     setPendingAppointment(null);
   };
 
+  const createFakeConsultations = async () => {
+    try {
+      setLoading(true);
+      showSuccess('Création de consultations de test en cours...');
+      
+      // Créer 3 fausses consultations avec des données réalistes
+      const fakePatients = [
+        { firstName: 'Konan', lastName: 'Diallo', motif: 'Contrôle de routine' },
+        { firstName: 'Aya', lastName: 'Touré', motif: 'Douleurs abdominales' },
+        { firstName: 'Yao', lastName: 'Kouamé', motif: 'Suivi post-opératoire' },
+      ];
+
+      for (const patient of fakePatients) {
+        // Créer le patient avec le service
+        const newPatient = await patientsService.create({
+          firstName: patient.firstName,
+          lastName: patient.lastName,
+          birthDate: new Date(1980 + Math.floor(Math.random() * 30), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28)).toISOString(),
+          sex: Math.random() > 0.5 ? 'M' : 'F',
+          phone: `+225 07 ${Math.floor(Math.random() * 90000000 + 10000000)}`,
+          address: 'Abidjan, Côte d\'Ivoire',
+          emergencyContact: '',
+          insurance: '',
+          consentMedicalData: true,
+          consentContact: true,
+        });
+
+        // Créer le rendez-vous avec le service
+        await appointmentsService.create({
+          patientId: newPatient.id,
+          doctorId: user?.id || '',
+          date: new Date().toISOString(),
+          motif: patient.motif,
+        });
+      }
+
+      showSuccess('3 consultations de test créées avec succès !');
+      await loadData();
+    } catch (error: any) {
+      console.error('Erreur lors de la création des consultations:', error);
+      showError(error.response?.data?.message || 'Erreur lors de la création des consultations de test');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRequestVitals = () => {
     if (!pendingAppointment) return;
     setConfirmOpen(false);
@@ -204,6 +251,14 @@ export function DoctorDashboard() {
             onClick={() => navigate('/results')}
           >
             Résultats
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={createFakeConsultations}
+            disabled={loading}
+          >
+            Créer consultations test
           </Button>
         </Box>
       </Box>

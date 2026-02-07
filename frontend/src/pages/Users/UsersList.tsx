@@ -147,6 +147,7 @@ export const UsersList = () => {
       [Role.BIOLOGIST]: 'Biologiste',
       [Role.NURSE]: 'Infirmier',
       [Role.SECRETARY]: 'Secrétaire',
+      [Role.RADIOLOGIST]: 'Radiologue',
     };
     return labels[role] || role;
   };
