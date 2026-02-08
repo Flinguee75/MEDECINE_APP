@@ -10,7 +10,6 @@ import {
 } from '@mui/material';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -60,7 +59,7 @@ export const Login = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: `linear-gradient(135deg, #1976D2 53%, #0D47A1 100%)`,
+        background: '#f3e7d3',
         p: 3,
       }}
     >
@@ -91,19 +90,19 @@ export const Login = () => {
           }}
         >
           <Box
+            component="img"
+            src="/logo_edlona.jpg"
+            alt="Logo EDLONA"
             sx={{
-              width: 80,
-              height: 80,
+              width: 120,
+              height: 120,
               borderRadius: '50%',
-              backgroundColor: alpha('#fff', 0.2),
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              objectFit: 'cover',
+              backgroundColor: '#fff',
+              p: 1,
               mb: 3,
             }}
-          >
-            <LocalHospitalIcon sx={{ fontSize: 48 }} />
-          </Box>
+          />
           <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
             EDLONA
           </Typography>
