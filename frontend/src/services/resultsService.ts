@@ -38,4 +38,9 @@ export const resultsService = {
     const response = await api.patch<ApiResponse<Result>>(`/results/${id}/review`, data);
     return response.data.data;
   },
+
+  async getPendingReview(): Promise<Result[]> {
+    const response = await api.get<ApiResponse<Result[]>>('/results/pending-review');
+    return response.data.data;
+  },
 };

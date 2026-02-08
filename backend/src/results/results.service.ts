@@ -73,6 +73,33 @@ export class ResultsService {
     });
   }
 
+  async getPendingReviewForDoctor(doctorId: string) {
+    return this.prisma.result.findMany({
+      where: {
+        reviewedBy: null,
+        prescription: {
+          doctorId,
+          status: PrescriptionStatus.RESULTS_AVAILABLE,
+        },
+      },
+      include: {
+        prescription: {
+          include: {
+            patient: true,
+            appointment: {
+              select: {
+                id: true,
+                status: true,
+                date: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findOne(id: string) {
     const result = await this.prisma.result.findUnique({
       where: { id },

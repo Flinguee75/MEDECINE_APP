@@ -292,6 +292,12 @@ describe('PrescriptionsService', () => {
       email: 'biologist@hospital.com',
       role: Role.BIOLOGIST,
     };
+    const mockRadiologist = {
+      id: 'radiologist-123',
+      name: 'Radiologist Test',
+      email: 'radiologist@hospital.com',
+      role: Role.RADIOLOGIST,
+    };
 
     it('should start analysis on collected sample', async () => {
       mockPrismaService.prescription.findUnique.mockResolvedValue(mockPrescription);
@@ -316,10 +322,31 @@ describe('PrescriptionsService', () => {
       });
     });
 
-    it('should fail if prescription is not BIOLOGIE category', async () => {
+    it('should allow RADIOLOGIST to start analysis for IMAGERIE prescription', async () => {
       mockPrismaService.prescription.findUnique.mockResolvedValue({
         ...mockPrescription,
         category: 'IMAGERIE',
+        sampleCollectedAt: null,
+      });
+      mockPrismaService.user.findUnique.mockResolvedValue(mockRadiologist);
+      mockPrismaService.prescription.update.mockResolvedValue({
+        ...mockPrescription,
+        category: 'IMAGERIE',
+        status: PrescriptionStatus.IN_PROGRESS,
+        analysisStartedAt: new Date(),
+      });
+
+      const result = await service.startAnalysis('presc-123', 'radiologist-123', {});
+
+      expect(result.status).toBe(PrescriptionStatus.IN_PROGRESS);
+      expect(result.analysisStartedAt).toBeDefined();
+    });
+
+    it('should fail if BIOLOGIST starts analysis for IMAGERIE prescription', async () => {
+      mockPrismaService.prescription.findUnique.mockResolvedValue({
+        ...mockPrescription,
+        category: 'IMAGERIE',
+        sampleCollectedAt: null,
       });
       mockPrismaService.user.findUnique.mockResolvedValue(mockBiologist);
 
@@ -329,7 +356,7 @@ describe('PrescriptionsService', () => {
       await expect(
         service.startAnalysis('presc-123', 'biologist-123', {}),
       ).rejects.toThrow(
-        'Seules les prescriptions de biologie peuvent être analysées par le biologiste',
+        'Seuls les radiologues peuvent démarrer l\'analyse d\'imagerie',
       );
     });
 

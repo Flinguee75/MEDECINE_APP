@@ -432,4 +432,52 @@ describe('ResultsService', () => {
       });
     });
   });
+
+  describe('getPendingReviewForDoctor', () => {
+    it('should return pending results to review for doctor notification feed', async () => {
+      const mockPending = [
+        {
+          id: 'result-1',
+          prescriptionId: 'presc-1',
+          reviewedBy: null,
+          prescription: {
+            id: 'presc-1',
+            doctorId: 'doctor-123',
+            status: PrescriptionStatus.RESULTS_AVAILABLE,
+            patient: { id: 'patient-1', firstName: 'Jean', lastName: 'Dupont' },
+            appointment: { id: 'apt-1', status: 'WAITING_RESULTS' },
+          },
+        },
+      ];
+      mockPrismaService.result.findMany.mockResolvedValue(mockPending);
+
+      const result = await service.getPendingReviewForDoctor('doctor-123');
+
+      expect(result).toEqual(mockPending);
+      expect(prisma.result.findMany).toHaveBeenCalledWith({
+        where: {
+          reviewedBy: null,
+          prescription: {
+            doctorId: 'doctor-123',
+            status: PrescriptionStatus.RESULTS_AVAILABLE,
+          },
+        },
+        include: {
+          prescription: {
+            include: {
+              patient: true,
+              appointment: {
+                select: {
+                  id: true,
+                  status: true,
+                  date: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+  });
 });

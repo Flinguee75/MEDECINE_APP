@@ -66,13 +66,8 @@ export function RadiologistDashboard() {
     loadData();
   }, []);
 
-  const handleStartExam = async (prescriptionId: string) => {
-    try {
-      await prescriptionsService.startAnalysis(prescriptionId);
-      await loadData();
-    } catch (error) {
-      console.error('Failed to start exam:', error);
-    }
+  const handleStartExam = (prescriptionId: string) => {
+    navigate(`/radiology/${prescriptionId}`);
   };
 
   const handleEnterResults = (prescriptionId: string) => {

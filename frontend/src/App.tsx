@@ -14,6 +14,7 @@ import { DoctorInProgressConsultations } from './pages/DoctorInProgressConsultat
 import { PrescriptionsList } from './pages/Prescriptions/PrescriptionsList';
 import { PrescriptionReviewPage } from './pages/Prescriptions/PrescriptionReviewPage';
 import { PrescriptionResultsPage } from './pages/Prescriptions/PrescriptionResultsPage';
+import { RadiologyRequestPage } from './pages/Prescriptions/RadiologyRequestPage';
 import { ResultsList } from './pages/Results/ResultsList';
 import { PatientMedicalRecord } from './pages/Patients/PatientMedicalRecord';
 
@@ -138,6 +139,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PrescriptionResultsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/radiology/:id"
+        element={
+          <ProtectedRoute>
+            <RadiologyRequestPage />
           </ProtectedRoute>
         }
       />

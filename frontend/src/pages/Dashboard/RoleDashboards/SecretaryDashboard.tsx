@@ -48,6 +48,7 @@ export function SecretaryDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [scheduledAppointments, setScheduledAppointments] = useState<Appointment[]>([]);
+  const [inProgressConsultations, setInProgressConsultations] = useState<Appointment[]>([]);
   const [consultationCompleted, setConsultationCompleted] = useState<Appointment[]>([]);
   const [patientsCount, setPatientsCount] = useState(0);
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -88,6 +89,15 @@ export function SecretaryDashboard() {
         allAppointments.filter(
           (apt) => apt.status === AppointmentStatus.CONSULTATION_COMPLETED
         )
+      );
+
+      setInProgressConsultations(
+        allAppointments.filter(
+          (apt) =>
+            apt.status === AppointmentStatus.CHECKED_IN ||
+            apt.status === AppointmentStatus.IN_CONSULTATION ||
+            apt.status === AppointmentStatus.WAITING_RESULTS
+        ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       );
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -249,6 +259,21 @@ export function SecretaryDashboard() {
 
   const isMotifValid = motifChoice === 'AUTRE' ? Boolean(formData.motif.trim()) : true;
   const isFormValid = Boolean(formData.patientId && formData.doctorId && formData.date && isMotifValid);
+
+  const getConsultationStateLabel = (appointment: Appointment) => {
+    if (appointment.status === AppointmentStatus.CHECKED_IN) {
+      return appointment.vitals
+        ? 'Constantes saisies - en attente médecin'
+        : 'Prise de constantes en cours';
+    }
+    if (appointment.status === AppointmentStatus.IN_CONSULTATION) {
+      return 'Consultation médecin en cours';
+    }
+    if (appointment.status === AppointmentStatus.WAITING_RESULTS) {
+      return 'En attente des résultats d’examens';
+    }
+    return 'En cours';
+  };
 
   // Loading skeleton selon spécs UX - jamais de page blanche
   if (loading) {
@@ -437,6 +462,90 @@ export function SecretaryDashboard() {
                           }}
                         >
                           Enregistrer
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Section Consultations en cours */}
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: 500, color: 'info.main' }}>
+              Consultations en cours
+            </Typography>
+            <Badge badgeContent={inProgressConsultations.length} color="info">
+              <AccessTime />
+            </Badge>
+          </Box>
+
+          {inProgressConsultations.length === 0 ? (
+            <Box textAlign="center" p={4}>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Aucune consultation en cours
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Les consultations actives apparaîtront ici.
+              </Typography>
+            </Box>
+          ) : (
+            <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: 'grey.50' }}>
+                    <TableCell sx={{ fontWeight: 600 }}>Patient</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Médecin</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Heure RDV</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>État de la consultation</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Statut</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600 }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {inProgressConsultations.map((appointment) => (
+                    <TableRow key={appointment.id} hover>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Person sx={{ color: 'primary.main', mr: 1 }} />
+                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                            {appointment.patient?.firstName} {appointment.patient?.lastName}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          Dr. {appointment.doctor?.name}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {new Date(appointment.date).toLocaleTimeString('fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2" color="text.secondary">
+                          {getConsultationStateLabel(appointment)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <WorkflowStatusChip status={appointment.status} />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => navigate('/appointments')}
+                        >
+                          Ouvrir agenda
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppointmentsService } from './appointments.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { AppointmentStatus, BillingStatus, Role } from '@prisma/client';
 
@@ -23,6 +24,9 @@ describe('AppointmentsService', () => {
       findUnique: jest.fn(),
     },
   };
+  const mockAuditService = {
+    log: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -31,6 +35,10 @@ describe('AppointmentsService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: AuditService,
+          useValue: mockAuditService,
         },
       ],
     }).compile();
@@ -223,7 +231,7 @@ describe('AppointmentsService', () => {
       mockPrismaService.appointment.findUnique.mockResolvedValue(mockAppointment);
       mockPrismaService.appointment.update.mockResolvedValue({
         ...mockAppointment,
-        status: AppointmentStatus.IN_CONSULTATION,
+        status: AppointmentStatus.CHECKED_IN,
         vitals: validVitalsDto.vitals,
         medicalHistoryNotes: validVitalsDto.medicalHistoryNotes,
         vitalsEnteredBy: 'nurse-123',
@@ -232,15 +240,16 @@ describe('AppointmentsService', () => {
 
       const result = await service.enterVitals('apt-123', validVitalsDto, 'nurse-123');
 
-      expect(result.status).toBe(AppointmentStatus.IN_CONSULTATION);
+      expect(result.status).toBe(AppointmentStatus.CHECKED_IN);
       expect(result.vitalsEnteredBy).toBe('nurse-123');
       expect(result.vitalsEnteredAt).toBeDefined();
       expect(prisma.appointment.update).toHaveBeenCalledWith({
         where: { id: 'apt-123' },
         data: {
-          status: AppointmentStatus.IN_CONSULTATION,
           vitals: validVitalsDto.vitals,
           medicalHistoryNotes: validVitalsDto.medicalHistoryNotes,
+          vitalsRequestedAt: null,
+          vitalsRequestedBy: null,
           vitalsEnteredBy: 'nurse-123',
           vitalsEnteredAt: expect.any(Date),
         },
@@ -275,16 +284,16 @@ describe('AppointmentsService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should update status to IN_CONSULTATION', async () => {
+    it('should keep appointment status unchanged when vitals are entered', async () => {
       mockPrismaService.appointment.findUnique.mockResolvedValue(mockAppointment);
       mockPrismaService.appointment.update.mockResolvedValue({
         ...mockAppointment,
-        status: AppointmentStatus.IN_CONSULTATION,
+        status: AppointmentStatus.CHECKED_IN,
       });
 
       const result = await service.enterVitals('apt-123', validVitalsDto, 'nurse-123');
 
-      expect(result.status).toBe(AppointmentStatus.IN_CONSULTATION);
+      expect(result.status).toBe(AppointmentStatus.CHECKED_IN);
     });
   });
 
@@ -334,7 +343,7 @@ describe('AppointmentsService', () => {
       await expect(
         service.completeConsultation('apt-123', consultationDto, 'doctor-123'),
       ).rejects.toThrow(
-        'Impossible de terminer la consultation : le rendez-vous doit être au statut IN_CONSULTATION',
+        'Impossible de terminer la consultation : le rendez-vous doit être au statut IN_CONSULTATION ou WAITING_RESULTS',
       );
     });
 

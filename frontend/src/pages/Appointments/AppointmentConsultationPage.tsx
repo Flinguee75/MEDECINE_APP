@@ -233,6 +233,49 @@ export const AppointmentConsultationPage = () => {
     }
   };
 
+  const parseImagingPrescriptionText = (text: string) => {
+    const lines = text.split('\n').map((line) => line.trimEnd());
+    const readField = (label: string) => {
+      const line = lines.find((item) => item.startsWith(`${label}:`));
+      return line ? line.replace(`${label}:`, '').trim() : '';
+    };
+    const readSection = (title: string) => {
+      const startIndex = lines.findIndex((item) => item === title);
+      if (startIndex < 0) return '';
+      const collected: string[] = [];
+      for (let index = startIndex + 1; index < lines.length; index += 1) {
+        const current = lines[index];
+        if (!current.trim()) {
+          if (collected.length > 0) break;
+          continue;
+        }
+        if (
+          current.endsWith(':') ||
+          current.startsWith('Patient:') ||
+          current.startsWith('Date de naissance:') ||
+          current.startsWith('Consultation:') ||
+          current.startsWith('Medecin prescripteur:') ||
+          current.startsWith('Date de prescription:')
+        ) {
+          break;
+        }
+        collected.push(current);
+      }
+      return collected.join('\n').trim();
+    };
+
+    return {
+      examType: readField("Type d'examen"),
+      region: readField('Region anatomique'),
+      urgency: readField('Urgence'),
+      contrast: readField('Injection de produit de contraste'),
+      indication: readSection('Indication clinique / renseignements cliniques:'),
+      question: readSection('Question diagnostique:'),
+      allergies: readSection('Allergies connues:'),
+      previousExams: readSection('Examens anterieurs:'),
+    };
+  };
+
   const handleCompleteConsultation = async () => {
     if (!id) return;
     const traceabilite = [
@@ -365,31 +408,29 @@ export const AppointmentConsultationPage = () => {
       setImagingError('');
       setImagingSuccess('');
       
-      // Construction du texte de la prescription avec tous les détails
+      // Construction du texte de la prescription (format simple, sans emojis)
       const textParts = [
-        `═══════════════════════════════════════════════════`,
-        `DEMANDE D'EXAMEN D'IMAGERIE MÉDICALE`,
-        `═══════════════════════════════════════════════════`,
+        `Demande d'examen d'imagerie`,
         ``,
-        `📋 TYPE D'EXAMEN: ${labType.trim()}`,
-        `📍 RÉGION ANATOMIQUE: ${labComment.trim()}`,
-        `⚡ URGENCE: ${labUrgency === 'URGENT' ? '🔴 URGENTE' : '🟢 Standard'}`,
-        imagingWithContrast ? `💉 AVEC INJECTION DE PRODUIT DE CONTRASTE` : '',
+        `Type d'examen: ${labType.trim()}`,
+        `Region anatomique: ${labComment.trim()}`,
+        `Urgence: ${labUrgency === 'URGENT' ? 'URGENTE' : 'Standard'}`,
+        imagingWithContrast
+          ? `Injection de produit de contraste: Oui`
+          : `Injection de produit de contraste: Non`,
         ``,
-        `🩺 INDICATION CLINIQUE / RENSEIGNEMENTS CLINIQUES:`,
+        `Indication clinique / renseignements cliniques:`,
         soins.trim(),
         ``,
-        arretTravail.trim() ? `❓ QUESTION DIAGNOSTIQUE:\n${arretTravail.trim()}\n` : '',
-        imagingAllergies.trim() ? `⚠️  ALLERGIES CONNUES:\n${imagingAllergies.trim()}\n` : '',
-        imagingPreviousExams.trim() ? `📅 EXAMENS ANTÉRIEURS:\n${imagingPreviousExams.trim()}\n` : '',
+        arretTravail.trim() ? `Question diagnostique:\n${arretTravail.trim()}\n` : '',
+        imagingAllergies.trim() ? `Allergies connues:\n${imagingAllergies.trim()}\n` : '',
+        imagingPreviousExams.trim() ? `Examens anterieurs:\n${imagingPreviousExams.trim()}\n` : '',
         ``,
-        `───────────────────────────────────────────────────`,
-        `👤 Patient: ${appointment.patient?.firstName} ${appointment.patient?.lastName}`,
-        `📅 Date de naissance: ${appointment.patient?.birthDate ? format(new Date(appointment.patient.birthDate), 'dd/MM/yyyy', { locale: fr }) : 'N/A'}`,
-        `🆔 Consultation: ${appointment.id}`,
-        `👨‍⚕️ Médecin prescripteur: Dr. ${user?.name}`,
-        `📅 Date de prescription: ${format(new Date(), 'dd/MM/yyyy à HH:mm', { locale: fr })}`,
-        `═══════════════════════════════════════════════════`,
+        `Patient: ${appointment.patient?.firstName} ${appointment.patient?.lastName}`,
+        `Date de naissance: ${appointment.patient?.birthDate ? format(new Date(appointment.patient.birthDate), 'dd/MM/yyyy', { locale: fr }) : 'N/A'}`,
+        `Consultation: ${appointment.id}`,
+        `Medecin prescripteur: Dr. ${user?.name}`,
+        `Date de prescription: ${format(new Date(), 'dd/MM/yyyy à HH:mm', { locale: fr })}`,
       ];
       
       const text = textParts.filter(Boolean).join('\n');
@@ -426,6 +467,24 @@ export const AppointmentConsultationPage = () => {
     } finally {
       setImagingLoading(false);
     }
+  };
+
+  const handlePrefillImagingExam = () => {
+    setLabType('Échographie');
+    setLabComment('Thorax');
+    setLabUrgency('STANDARD');
+    setImagingWithContrast(false);
+    setSoins(
+      "Douleur thoracique intermittente, dyspnee d'effort. Suspicion d'atteinte cardiaque structurelle.",
+    );
+    setArretTravail(
+      'Rechercher anomalie de la cinetique segmentaire, valvulopathie et alteration de la fonction ventriculaire gauche.',
+    );
+    setImagingAllergies('Aucune allergie connue aux produits de contraste.');
+    setImagingPreviousExams('Radiographie thoracique du 03/01/2026 (normale).');
+    setSendToLab(true);
+    setImagingError('');
+    setImagingSuccess('Exemple imagerie prerempli');
   };
 
   if (loading) {
@@ -1025,6 +1084,12 @@ export const AppointmentConsultationPage = () => {
                 </Grid>
 
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={handlePrefillImagingExam}
+                  >
+                    Preremplir exemple
+                  </Button>
                   <Button 
                     variant="outlined" 
                     color="secondary"
@@ -1091,22 +1156,81 @@ export const AppointmentConsultationPage = () => {
                 Aucun examen d'imagerie prescrit
               </Typography>
             ) : (
-              imagingRequests.map((req) => (
-                <Box key={req.id} sx={{ mb: 2, p: 2, border: '1px solid #e3d5ff', borderRadius: 2, bgcolor: '#faf8ff' }}>
-                  <Chip 
-                    label={formatLabStatus(req.status)} 
-                    size="small" 
-                    color="secondary"
-                    sx={{ mb: 1 }}
-                  />
-                  <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
-                    {req.text}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                    Prescrit le {format(new Date(req.createdAt), 'dd/MM/yyyy à HH:mm')}
-                  </Typography>
-                </Box>
-              ))
+              imagingRequests.map((req) => {
+                const details = parseImagingPrescriptionText(req.text || '');
+                return (
+                  <Card
+                    key={req.id}
+                    sx={{ mb: 2, border: '1px solid #d9d9d9', borderRadius: 2 }}
+                    variant="outlined"
+                  >
+                    <CardContent>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                            {details.examType || "Examen d'imagerie"}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {details.region || 'Région non précisée'}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                          <Chip label={formatLabStatus(req.status)} size="small" color="secondary" />
+                          {details.urgency && (
+                            <Chip
+                              label={details.urgency}
+                              size="small"
+                              color={details.urgency === 'URGENTE' ? 'error' : 'default'}
+                              variant="outlined"
+                            />
+                          )}
+                        </Box>
+                      </Box>
+
+                      <Divider sx={{ my: 1.5 }} />
+
+                      <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                        Indication clinique
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 1.5, whiteSpace: 'pre-line' }}>
+                        {details.indication || 'Non renseignée'}
+                      </Typography>
+
+                      {details.question && (
+                        <>
+                          <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                            Question diagnostique
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 1.5, whiteSpace: 'pre-line' }}>
+                            {details.question}
+                          </Typography>
+                        </>
+                      )}
+
+                      <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                        <Typography variant="body2" color="text.secondary">
+                          <strong>Contraste:</strong> {details.contrast || 'Non précisé'}
+                        </Typography>
+                        {details.allergies && (
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Allergies:</strong> {details.allergies}
+                          </Typography>
+                        )}
+                      </Box>
+
+                      {details.previousExams && (
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                          <strong>Examens antérieurs:</strong> {details.previousExams}
+                        </Typography>
+                      )}
+
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
+                        Prescrit le {format(new Date(req.createdAt), 'dd/MM/yyyy à HH:mm')}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </TabPanel>
 

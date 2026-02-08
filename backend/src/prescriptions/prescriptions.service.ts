@@ -199,23 +199,27 @@ export class PrescriptionsService {
       throw new ForbiddenException('La prescription doit être au statut SENT_TO_LAB');
     }
 
-    // Only BIOLOGIE prescriptions can be analyzed by biologist
-    if (prescription.category !== 'BIOLOGIE') {
-      throw new ForbiddenException('Seules les prescriptions de biologie peuvent être analysées par le biologiste');
-    }
-
-    if (!prescription.sampleCollectedAt) {
-      throw new ForbiddenException('L\'échantillon doit être collecté avant de commencer l\'analyse');
-    }
-
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('Utilisateur non trouvé');
     }
 
-    // Only BIOLOGIST can start analysis
-    if (user.role !== Role.BIOLOGIST && user.role !== Role.ADMIN) {
-      throw new ForbiddenException('Seuls les biologistes peuvent démarrer l\'analyse');
+    // Biologie workflow: biologiste + prélèvement requis
+    if (prescription.category === 'BIOLOGIE') {
+      if (!prescription.sampleCollectedAt) {
+        throw new ForbiddenException('L\'échantillon doit être collecté avant de commencer l\'analyse');
+      }
+
+      if (user.role !== Role.BIOLOGIST && user.role !== Role.ADMIN) {
+        throw new ForbiddenException('Seuls les biologistes peuvent démarrer l\'analyse');
+      }
+    } else if (prescription.category === 'IMAGERIE') {
+      // Imagerie workflow: radiologue (pas de prélèvement)
+      if (user.role !== Role.RADIOLOGIST && user.role !== Role.ADMIN) {
+        throw new ForbiddenException('Seuls les radiologues peuvent démarrer l\'analyse d\'imagerie');
+      }
+    } else {
+      throw new ForbiddenException('Catégorie de prescription non prise en charge');
     }
 
     return this.prisma.prescription.update({

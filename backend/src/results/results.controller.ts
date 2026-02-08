@@ -16,7 +16,7 @@ export class ResultsController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles(Role.BIOLOGIST, Role.ADMIN)
+  @Roles(Role.BIOLOGIST, Role.RADIOLOGIST, Role.ADMIN)
   async create(@Body() createDto: CreateResultDto) {
     const result = await this.resultsService.create(createDto);
     return {
@@ -31,6 +31,14 @@ export class ResultsController {
     return { data: results };
   }
 
+  @Get('pending-review')
+  @UseGuards(RolesGuard)
+  @Roles(Role.DOCTOR, Role.ADMIN)
+  async getPendingReview(@CurrentUser() userId: string) {
+    const results = await this.resultsService.getPendingReviewForDoctor(userId);
+    return { data: results };
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const result = await this.resultsService.findOne(id);
@@ -39,7 +47,7 @@ export class ResultsController {
 
   @Patch(':id')
   @UseGuards(RolesGuard)
-  @Roles(Role.BIOLOGIST, Role.ADMIN)
+  @Roles(Role.BIOLOGIST, Role.RADIOLOGIST, Role.ADMIN)
   async update(@Param('id') id: string, @Body() updateDto: UpdateResultDto) {
     const result = await this.resultsService.update(id, updateDto);
     return {

@@ -40,11 +40,19 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useNotification } from '../../../context/NotificationContext';
 import { appointmentsService } from '../../../services/appointmentsService';
-import { prescriptionsService } from '../../../services/prescriptionsService';
+import { resultsService } from '../../../services/resultsService';
 import { patientsService } from '../../../services/patientsService';
 import { Appointment, AppointmentStatus } from '../../../types/Appointment';
-import { Prescription, PrescriptionStatus } from '../../../types/Prescription';
+import { Patient } from '../../../types/Patient';
+import { Result } from '../../../types/Result';
 import { PrescriptionStatusChip } from '../../../components/StatusChips';
+
+interface PatientHistoryItem {
+  patientId: string;
+  fullName: string;
+  lastAppointmentDate: string;
+  lastStatus: AppointmentStatus;
+}
 
 export function DoctorDashboard() {
   const { user } = useAuth();
@@ -54,32 +62,37 @@ export function DoctorDashboard() {
   const [loading, setLoading] = useState(true);
   const [consultationsReady, setConsultationsReady] = useState<Appointment[]>([]);
   const [waitingResults, setWaitingResults] = useState<Appointment[]>([]);
-  const [resultsToReview, setResultsToReview] = useState<Prescription[]>([]);
+  const [resultsToReview, setResultsToReview] = useState<Result[]>([]);
+  const [registeredPatients, setRegisteredPatients] = useState<Patient[]>([]);
+  const [patientHistoryItems, setPatientHistoryItems] = useState<PatientHistoryItem[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingAppointment, setPendingAppointment] = useState<Appointment | null>(null);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const appointments = await appointmentsService.getAll(
-        user?.id,
-        undefined,
-        undefined,
-        [
-          AppointmentStatus.CHECKED_IN,
-          AppointmentStatus.IN_CONSULTATION,
-          AppointmentStatus.WAITING_RESULTS,
-        ],
-      );
-      const prescriptions = await prescriptionsService.getAll({ doctorId: user?.id });
+      const [appointments, pendingResults, allDoctorAppointments, allPatients] = await Promise.all([
+        appointmentsService.getAll(
+          user?.id,
+          undefined,
+          undefined,
+          [
+            AppointmentStatus.CHECKED_IN,
+            AppointmentStatus.IN_CONSULTATION,
+            AppointmentStatus.WAITING_RESULTS,
+          ],
+        ),
+        resultsService.getPendingReview(),
+        appointmentsService.getAll(user?.id),
+        patientsService.getAll(),
+      ]);
 
       // Consultations prêtes = constantes validées ou en attente de résultats
       setConsultationsReady(
         appointments.filter(
           (apt) =>
             apt.status === AppointmentStatus.CHECKED_IN ||
-            apt.status === AppointmentStatus.IN_CONSULTATION ||
-            apt.status === AppointmentStatus.WAITING_RESULTS
+            apt.status === AppointmentStatus.IN_CONSULTATION
         )
       );
 
@@ -89,9 +102,27 @@ export function DoctorDashboard() {
       );
 
       // Résultats à réviser = prescriptions avec résultats disponibles
-      setResultsToReview(
-        prescriptions.filter((p) => p.status === PrescriptionStatus.RESULTS_AVAILABLE)
-      );
+      setResultsToReview(pendingResults);
+      setRegisteredPatients(allPatients);
+
+      // Historique patients: dernier rendez-vous par patient
+      const sorted = [...allDoctorAppointments]
+        .filter((apt) => apt.patient && apt.status !== AppointmentStatus.CANCELLED)
+        .sort(
+          (a, b) =>
+            new Date(b.date).getTime() - new Date(a.date).getTime(),
+        );
+      const unique = new Map<string, PatientHistoryItem>();
+      sorted.forEach((apt) => {
+        if (!apt.patient || unique.has(apt.patientId)) return;
+        unique.set(apt.patientId, {
+          patientId: apt.patientId,
+          fullName: `${apt.patient.firstName} ${apt.patient.lastName}`,
+          lastAppointmentDate: apt.date,
+          lastStatus: apt.status,
+        });
+      });
+      setPatientHistoryItems(Array.from(unique.values()));
     } catch (error) {
       console.error('Failed to load data:', error);
       showError('Erreur lors du chargement des données');
@@ -130,6 +161,10 @@ export function DoctorDashboard() {
 
   const handleReviewResult = (prescriptionId: string) => {
     navigate(`/prescriptions/${prescriptionId}/review`);
+  };
+
+  const handleOpenWaitingConsultation = (appointmentId: string) => {
+    navigate(`/appointments/${appointmentId}/consult`);
   };
 
   const handleViewPatient = (patientId: string) => {
@@ -491,6 +526,141 @@ export function DoctorDashboard() {
         </CardContent>
       </Card>
 
+      {/* Section accès dossiers médicaux des patients enregistrés */}
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Typography variant="h5" sx={{ fontWeight: 500 }}>
+              Dossiers médicaux des patients enregistrés
+            </Typography>
+            <Chip
+              label={`${registeredPatients.length} patient${registeredPatients.length > 1 ? 's' : ''}`}
+              color="primary"
+              variant="outlined"
+            />
+          </Box>
+
+          {registeredPatients.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              Aucun patient enregistré.
+            </Typography>
+          ) : (
+            <List disablePadding>
+              {registeredPatients.slice(0, 8).map((patient, index) => (
+                <Box key={patient.id}>
+                  <ListItem sx={{ px: 0, py: 1.5 }}>
+                    <ListItemText
+                      primary={`${patient.firstName} ${patient.lastName}`}
+                      secondary={patient.phone || 'Téléphone non renseigné'}
+                    />
+                    <ListItemSecondaryAction>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => handleViewPatient(patient.id)}
+                      >
+                        Ouvrir dossier
+                      </Button>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                  {index < Math.min(registeredPatients.length, 8) - 1 && <Divider />}
+                </Box>
+              ))}
+            </List>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Section consultations en attente de résultats */}
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Typography variant="h5" sx={{ fontWeight: 500 }}>
+              Consultations en attente de résultats
+            </Typography>
+            <Chip
+              label={`${waitingResults.length} dossier${waitingResults.length > 1 ? 's' : ''}`}
+              color="warning"
+              variant="outlined"
+            />
+          </Box>
+
+          {waitingResults.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              Aucune consultation en attente de résultats.
+            </Typography>
+          ) : (
+            <List disablePadding>
+              {waitingResults.map((appointment, index) => (
+                <Box key={appointment.id}>
+                  <ListItem sx={{ px: 0, py: 1.5 }}>
+                    <ListItemText
+                      primary={`${appointment.patient?.firstName} ${appointment.patient?.lastName}`}
+                      secondary={`Motif: ${appointment.motif}`}
+                    />
+                    <ListItemSecondaryAction>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => handleOpenWaitingConsultation(appointment.id)}
+                      >
+                        Ouvrir
+                      </Button>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                  {index < waitingResults.length - 1 && <Divider />}
+                </Box>
+              ))}
+            </List>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Section historique patients */}
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Typography variant="h5" sx={{ fontWeight: 500 }}>
+              Historique patients
+            </Typography>
+            <Chip
+              label={`${patientHistoryItems.length} patient${patientHistoryItems.length > 1 ? 's' : ''}`}
+              color="info"
+              variant="outlined"
+            />
+          </Box>
+
+          {patientHistoryItems.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              Aucun historique patient disponible.
+            </Typography>
+          ) : (
+            <List disablePadding>
+              {patientHistoryItems.slice(0, 8).map((item, index) => (
+                <Box key={item.patientId}>
+                  <ListItem sx={{ px: 0, py: 1.5 }}>
+                    <ListItemText
+                      primary={item.fullName}
+                      secondary={`Dernier RDV: ${new Date(item.lastAppointmentDate).toLocaleDateString('fr-FR')} - ${item.lastStatus}`}
+                    />
+                    <ListItemSecondaryAction>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => handleViewPatient(item.patientId)}
+                      >
+                        Voir dossier
+                      </Button>
+                    </ListItemSecondaryAction>
+                  </ListItem>
+                  {index < Math.min(patientHistoryItems.length, 8) - 1 && <Divider />}
+                </Box>
+              ))}
+            </List>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Section résultats à réviser - Priorité haute selon spécs */}
       {resultsToReview.length > 0 && (
         <Card sx={{ mb: 4, border: '2px solid', borderColor: 'warning.main' }}>
@@ -505,22 +675,24 @@ export function DoctorDashboard() {
             </Box>
             
             <List disablePadding>
-              {resultsToReview.slice(0, 3).map((prescription, index) => (
-                <Box key={prescription.id}>
+              {resultsToReview.slice(0, 3).map((result, index) => (
+                <Box key={result.id}>
                   <ListItem sx={{ px: 0, py: 2 }}>
                     <ListItemText
                       primary={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <Typography variant="h6" sx={{ fontWeight: 500 }}>
-                            {prescription.patient?.firstName} {prescription.patient?.lastName}
+                            {result.prescription?.patient?.firstName} {result.prescription?.patient?.lastName}
                           </Typography>
-                          <PrescriptionStatusChip status={prescription.status} />
+                          {result.prescription?.status && (
+                            <PrescriptionStatusChip status={result.prescription.status} />
+                          )}
                         </Box>
                       }
                       secondary={
                         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                           <Assignment sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'middle' }} />
-                          {prescription.text.substring(0, 80)}...
+                          {(result.text || '').substring(0, 80)}...
                         </Typography>
                       }
                     />
@@ -528,7 +700,7 @@ export function DoctorDashboard() {
                       <Button
                         variant="outlined"
                         color="error"
-                        onClick={() => handleReviewResult(prescription.id)}
+                        onClick={() => handleReviewResult(result.prescriptionId)}
                         sx={{ minWidth: 120 }}
                       >
                         Réviser
